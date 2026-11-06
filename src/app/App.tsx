@@ -32,7 +32,7 @@ export function App({ services = defaultServices }: { services?: AppServices }) 
         <p className="hero-copy">
           Descarga un municipio una vez y estudia después su mapa vectorial, incluso sin conexión.
         </p>
-        <button type="button">Explorar Colmenarejo</button>
+        <button type="button" onClick={() => document.getElementById('municipality-query')?.focus()}>Explorar Colmenarejo</button>
         <p className="attribution">© OpenStreetMap contributors</p>
       </section>
       <MunicipalityHome services={services} onOpenMunicipality={(id) => {

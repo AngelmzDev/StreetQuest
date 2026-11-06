@@ -37,6 +37,17 @@ function setOnline(value: boolean) {
 }
 
 describe('MunicipalityHome', () => {
+  it.each(['network', 'aborted'] as const)('allows retry after discovery %s', async (kind) => {
+    setOnline(true)
+    const appServices = services()
+    vi.mocked(appServices.importer.discoverMunicipalities).mockRejectedValueOnce(mapEngineError(kind, 'failure'))
+    render(<MunicipalityHome services={appServices} onOpenMunicipality={() => undefined} />)
+    fireEvent.click(screen.getByRole('button', { name: /buscar municipio/i }))
+    await waitFor(() => expect(screen.getByRole('button', { name: /buscar municipio/i })).toBeEnabled())
+    expect(screen.queryByRole('button', { name: /cancelar/i })).not.toBeInTheDocument()
+    fireEvent.click(screen.getByRole('button', { name: /buscar municipio/i }))
+    await screen.findByText(/disponible sin conexión/i)
+  })
   it('prefills Colmenarejo and searches only after explicit submission', async () => {
     setOnline(true)
     const appServices = services()

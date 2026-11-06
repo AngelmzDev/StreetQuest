@@ -120,7 +120,6 @@ export function MunicipalityHome({ services, onOpenMunicipality }: MunicipalityH
       else await downloadCandidate(result.candidate, activeController)
     } catch (error) {
       dispatch({ type: 'error', error: friendlyError(error) })
-      controller.current = null
     } finally {
       if (controller.current === activeController) {
         controller.current = null
