@@ -1,13 +1,15 @@
 import { useEffect, useEffectEvent, useRef, useState } from 'react'
 import type { MunicipalityPackage } from '../../domain/maps/types'
 import { createStudyMap } from './leafletAdapter'
-import { answerGame, startGame, type GameMode, type StreetGame } from './streetGame'
+import { answerGame, readStreakRecord, saveStreakRecord, startGame, type GameMode, type StreetGame } from './streetGame'
 
 export function StudyMap({ municipality, onBack }: { municipality: MunicipalityPackage; onBack(): void }) {
   const host = useRef<HTMLDivElement>(null)
   const controller = useRef<ReturnType<typeof createStudyMap> | null>(null)
   const [selectedStreetId, setSelectedStreetId] = useState('')
   const [game, setGame] = useState<StreetGame | null>(null)
+  const mode = game?.mode
+  const record = game?.record ?? 0
   const question = game?.questions[game.index]
   const locating = game?.mode === 'locate'
   const answered = game?.answered ?? false
@@ -34,6 +36,10 @@ export function StudyMap({ municipality, onBack }: { municipality: MunicipalityP
   }, [municipality, highlighted])
 
   useEffect(() => {
+    if (mode && record > 0) saveStreakRecord(municipality.id, mode, record)
+  }, [municipality.id, mode, record])
+
+  useEffect(() => {
     if (!question) return
     if (!locating || answered) controller.current?.focusStreet(question.street.id)
     else controller.current?.resetView()
@@ -41,7 +47,7 @@ export function StudyMap({ municipality, onBack }: { municipality: MunicipalityP
 
   function begin(mode: GameMode) {
     setSelectedStreetId('')
-    setGame(startGame(mode, municipality.streets))
+    setGame(startGame(mode, municipality.streets, readStreakRecord(municipality.id, mode)))
   }
 
   function exitGame() {
@@ -71,6 +77,11 @@ export function StudyMap({ municipality, onBack }: { municipality: MunicipalityP
         {!game && <div className="game-actions">
           <button type="button" onClick={() => begin('guess')} disabled={municipality.streets.length < 2}>Adivina la calle</button>
           <button type="button" onClick={() => begin('locate')} disabled={!municipality.streets.length}>Localiza la calle</button>
+        </div>}
+        {game && <div className="game-score" role="status" aria-label="Marcador">
+          <span>Puntuación: {game.correct}</span>
+          <span>Racha actual: {game.streak}</span>
+          <span>Récord: {game.record}</span>
         </div>}
         {game && question && <>
           <p aria-live="polite">Pregunta {game.index + 1} de {game.questions.length} · {game.correct} aciertos</p>

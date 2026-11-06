@@ -20,6 +20,7 @@ test('Windows executable opens real Colmenarejo offline and keeps it after resta
     await expect(page.locator('.leaflet-overlay-pane canvas')).toBeVisible()
     await page.getByRole('button', { name: 'Adivina la calle' }).click()
     await expect(page.getByText('¿Cómo se llama la calle resaltada?')).toBeVisible()
+    await expect(page.getByRole('status', { name: 'Marcador' })).toHaveText(/Puntuación: 0.*Racha actual: 0.*Récord: 0/)
     await expect(page.getByRole('combobox')).toHaveCount(0)
     for (let index = 1; index <= 10; index += 1) {
       await expect(page.getByText(`Pregunta ${index} de 10 · 0 aciertos`)).toBeVisible()

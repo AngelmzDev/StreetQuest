@@ -35,6 +35,8 @@ La última orden muestra la ruta del ejecutable en `release/`. La instalación d
 
 Desde el mapa puedes elegir **Adivina la calle** para identificar el tramo resaltado entre varias opciones o **Localiza la calle** para pulsar en el mapa el nombre que te pide el juego. Cada partida presenta hasta diez calles distintas, muestra la respuesta después de cada intento y calcula los aciertos al final. Los dos modos funcionan sin conexión con Colmenarejo o con cualquier mapa guardado que tenga suficientes calles.
 
+El marcador suma un punto por acierto. Un fallo o salto reinicia la racha actual. El récord de aciertos seguidos se guarda en el equipo por municipio y modo de juego.
+
 Esta fase busca municipios españoles con un límite administrativo compatible en OpenStreetMap. Los datos dependen de la cobertura de OpenStreetMap. El mapa incluye vías con nombre de las categorías seleccionadas para el estudio urbano.
 
 Si la búsqueda o descarga tarda demasiado, cancélala y vuelve a intentarlo más tarde. Mientras tanto puedes seguir usando Colmenarejo y los mapas guardados. En la edición web, abre primero la versión compilada con conexión para que el navegador guarde los recursos de la aplicación.

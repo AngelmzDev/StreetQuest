@@ -37,6 +37,31 @@ describe('StudyMap', () => {
     expect(screen.getByText('1 de 1 aciertos')).toBeInTheDocument()
   })
 
+  it('resets the current streak on a skip and keeps the record when the map is reopened', () => {
+    localStorage.clear()
+    const municipality = packageFixture()
+    municipality.streets.push({ ...municipality.streets[0]!, id: 'street-2', name: 'Calle Dos', normalizedName: 'calle dos' })
+    const first = render(<StudyMap municipality={municipality} onBack={() => undefined} />)
+    fireEvent.click(screen.getByRole('button', { name: 'Localiza la calle' }))
+    const clickStreet = vi.mocked(createStudyMap).mock.lastCall?.[3]
+    const target = screen.getByText(/^Localiza Calle (Uno|Dos) en el mapa\.$/).textContent
+    act(() => clickStreet?.(target?.includes('Uno') ? 'street-1' : 'street-2', ''))
+    expect(screen.getByText('Racha actual: 1')).toBeInTheDocument()
+    fireEvent.click(screen.getByRole('button', { name: 'Siguiente calle' }))
+    fireEvent.click(screen.getByRole('button', { name: 'Saltar' }))
+    expect(screen.getByText('Racha actual: 0')).toBeInTheDocument()
+    expect(screen.getByText('Récord: 1')).toBeInTheDocument()
+    first.unmount()
+    render(<StudyMap municipality={municipality} onBack={() => undefined} />)
+    fireEvent.click(screen.getByRole('button', { name: 'Localiza la calle' }))
+    expect(screen.getByText('Récord: 1')).toBeInTheDocument()
+    expect(screen.getByText('Racha actual: 0')).toBeInTheDocument()
+    fireEvent.click(screen.getByRole('button', { name: 'Salir del juego' }))
+    fireEvent.click(screen.getByRole('button', { name: 'Adivina la calle' }))
+    expect(screen.getByText('Récord: 0')).toBeInTheDocument()
+    localStorage.clear()
+  })
+
   it('shows municipality context, attribution, and back navigation', () => {
     const onBack = vi.fn()
     render(<StudyMap municipality={packageFixture()} onBack={onBack} />)

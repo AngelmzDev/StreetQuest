@@ -64,6 +64,8 @@ button:disabled { cursor: not-allowed; opacity: .5; }
 .game-panel p { margin: 0 0 .4rem; }
 .game-panel strong + p { margin-top: .4rem; }
 .game-actions { display: flex; flex-wrap: wrap; gap: .5rem; align-items: center; }
+.game-score { display: flex; flex-wrap: wrap; gap: .4rem .75rem; margin-bottom: .55rem; }
+.game-score span { padding: .25rem .6rem; border-radius: .45rem; background: #e7eee9; font-weight: 700; }
 .game-panel strong + .game-actions { margin-top: .6rem; }
 .study-header, .study-footer { display: flex; align-items: center; justify-content: space-between; gap: 1rem; padding: 1rem 1.25rem; background: #f8f5ed; }
 .study-header h1 { margin: 0; font-size: clamp(1.8rem, 5vw, 3rem); letter-spacing: -.04em; }
