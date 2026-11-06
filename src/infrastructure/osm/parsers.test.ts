@@ -1,7 +1,8 @@
 import { describe, expect, it } from 'vitest'
 import colmenarejo from '../../test/fixtures/colmenarejo-boundary.json'
 import enclave from '../../test/fixtures/multipolygon-enclave.json'
-import { parseMunicipalityBoundary } from './parsers'
+import streets from '../../test/fixtures/colmenarejo-streets.json'
+import { parseMunicipalityBoundary, parseStreetWays } from './parsers'
 
 describe('parseMunicipalityBoundary', () => {
   it('parses the condensed Colmenarejo relation and closes its outer ring', () => {
@@ -30,5 +31,15 @@ describe('parseMunicipalityBoundary', () => {
   it('rejects a relation with no outer geometry', () => {
     const payload = { elements: [{ type: 'relation', id: 9, members: [{ type: 'way', ref: 1, role: 'inner', geometry: [] }], tags: { name: 'Rota' } }] }
     expect(() => parseMunicipalityBoundary(payload, 9)).toThrowError(expect.objectContaining({ kind: 'invalid-boundary' }))
+  })
+})
+
+describe('parseStreetWays', () => {
+  it('keeps unique named study streets and skips excluded or invalid ways', () => {
+    const parsed = parseStreetWays(streets)
+
+    expect(parsed).toHaveLength(3)
+    expect(parsed.map((way) => way.sourceWayId)).toEqual([101, 102, 103])
+    expect(parsed.some((way) => way.highway === 'footway')).toBe(false)
   })
 })
