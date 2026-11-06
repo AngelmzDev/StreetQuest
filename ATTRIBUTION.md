@@ -2,6 +2,12 @@
 
 StreetQuest utiliza datos de OpenStreetMap obtenidos mediante servicios compatibles con Nominatim y Overpass.
 
+El archivo `public/colmenarejo-osm.json` contiene un extracto de OpenStreetMap
+distribuido bajo ODbL 1.0. Incluye la relación 347003 y vías con nombre
+de su entorno obtenidas de la API de OpenStreetMap. El campo `capturedAt`
+registra la fecha de captura. El script `desktop/capture-colmenarejo.ps1`
+documenta cómo se generó el extracto.
+
 ## Aviso visible
 
 La aplicación muestra `© OpenStreetMap contributors` en el catálogo y en cada mapa de estudio, incluso cuando no existe una capa de teselas.

@@ -2,6 +2,7 @@ import { useState } from 'react'
 import './styles.css'
 import type { MunicipalityPackage } from '../domain/maps/types'
 import { createMunicipalityImporter } from '../features/municipalities/importMunicipality'
+import { openBundledColmenarejo } from '../features/municipalities/colmenarejo'
 import { MunicipalityHome, type AppServices } from '../features/municipalities/MunicipalityHome'
 import { createNominatimClient } from '../infrastructure/osm/nominatimClient'
 import { createOverpassClient } from '../infrastructure/osm/overpassClient'
@@ -21,6 +22,19 @@ const defaultServices: AppServices = {
 export function App({ services = defaultServices }: { services?: AppServices }) {
   const [selected, setSelected] = useState<MunicipalityPackage | null>(null)
   const [openError, setOpenError] = useState('')
+  const [openingDemo, setOpeningDemo] = useState(false)
+
+  async function openDemo() {
+    setOpeningDemo(true)
+    setOpenError('')
+    try {
+      setSelected(await openBundledColmenarejo(services.store))
+    } catch {
+      setOpenError('No se pudo abrir el mapa incluido de Colmenarejo.')
+    } finally {
+      setOpeningDemo(false)
+    }
+  }
 
   if (selected) return <StudyMap municipality={selected} onBack={() => setSelected(null)} />
 
@@ -32,7 +46,7 @@ export function App({ services = defaultServices }: { services?: AppServices }) 
         <p className="hero-copy">
           Descarga un municipio una vez y estudia después su mapa vectorial, incluso sin conexión.
         </p>
-        <button type="button" onClick={() => document.getElementById('municipality-query')?.focus()}>Explorar Colmenarejo</button>
+        <button type="button" disabled={openingDemo} onClick={() => void openDemo()}>Explorar Colmenarejo</button>
         <p className="attribution">© OpenStreetMap contributors</p>
       </section>
       <MunicipalityHome services={services} onOpenMunicipality={(id) => {

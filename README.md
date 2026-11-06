@@ -57,6 +57,14 @@ pnpm test:e2e
 
 ## Uso sin conexión
 
+«Explorar Colmenarejo» abre el mapa incluido, obtenido de OpenStreetMap.
+Está disponible desde el primer arranque de la edición Windows, sin descarga
+previa. El catálogo guarda la copia en el perfil local de StreetQuest.
+
+En Windows, ejecuta `pnpm build:windows` para generar una carpeta portable
+en `release/`. Abre `StreetQuest.exe` desde esa carpeta y conserva junto al
+ejecutable los archivos que se generaron con él.
+
 1. Con conexión, busca un municipio y confirma el candidato correcto cuando exista ambigüedad.
 2. StreetQuest descarga el límite y las calles, valida el paquete y lo guarda en IndexedDB.
 3. Abre el municipio desde «Tus mapas sin conexión».

@@ -19,7 +19,7 @@ export default defineConfig({
         icons: [{ src: '/icon.svg', sizes: 'any', type: 'image/svg+xml', purpose: 'any maskable' }],
       },
       workbox: {
-        globPatterns: ['**/*.{js,css,html,svg,webmanifest}'],
+        globPatterns: ['**/*.{js,css,html,svg,webmanifest}', 'colmenarejo-osm.json'],
         navigateFallback: 'index.html',
         runtimeCaching: [],
       },
@@ -31,6 +31,6 @@ export default defineConfig({
     setupFiles: ['./src/test/setup.ts'],
     css: true,
     restoreMocks: true,
-    exclude: ['e2e/**', 'node_modules/**', 'dist/**'],
+    exclude: ['e2e/**', 'node_modules/**', 'dist/**', 'release/**'],
   },
 })

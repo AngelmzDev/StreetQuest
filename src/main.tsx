@@ -5,7 +5,7 @@ import 'leaflet/dist/leaflet.css'
 import { registerSW } from 'virtual:pwa-register'
 import { registerOfflineShell } from './app/offline'
 
-registerOfflineShell(registerSW)
+if (window.location.protocol !== 'streetquest:') registerOfflineShell(registerSW)
 
 const root = document.getElementById('root')
 
