@@ -1,10 +1,11 @@
-import { fireEvent, render, screen } from '@testing-library/react'
+import { act, fireEvent, render, screen } from '@testing-library/react'
 import { describe, expect, it, vi } from 'vitest'
 import type { MunicipalityPackage, StreetSegment } from '../../domain/maps/types'
 
-vi.mock('./leafletAdapter', () => ({ createStudyMap: vi.fn(() => ({ destroy: vi.fn(), selectStreet: vi.fn() })) }))
+vi.mock('./leafletAdapter', () => ({ createStudyMap: vi.fn(() => ({ destroy: vi.fn(), selectStreet: vi.fn(), focusStreet: vi.fn(), resetView: vi.fn() })) }))
 
 import { StudyMap } from './StudyMap'
+import { createStudyMap } from './leafletAdapter'
 
 function packageFixture(segmentCount = 1): MunicipalityPackage {
   const segments: StreetSegment[] = Array.from({ length: segmentCount }, (_, index) => ({
@@ -20,6 +21,22 @@ function packageFixture(segmentCount = 1): MunicipalityPackage {
 }
 
 describe('StudyMap', () => {
+  it('scores the located street once and shows the result', () => {
+    const municipality = packageFixture()
+    render(<StudyMap municipality={municipality} onBack={() => undefined} />)
+    fireEvent.click(screen.getByRole('button', { name: 'Localiza la calle' }))
+    expect(screen.getByText('Localiza Calle Uno en el mapa.')).toBeInTheDocument()
+    expect(screen.queryByRole('combobox')).not.toBeInTheDocument()
+    const clickStreet = vi.mocked(createStudyMap).mock.lastCall?.[3]
+    act(() => {
+      clickStreet?.('street-1', 'Calle Uno')
+      clickStreet?.('street-1', 'Calle Uno')
+    })
+    expect(screen.getByText(/correcto.*calle uno/i)).toBeInTheDocument()
+    fireEvent.click(screen.getByRole('button', { name: 'Ver resultado' }))
+    expect(screen.getByText('1 de 1 aciertos')).toBeInTheDocument()
+  })
+
   it('shows municipality context, attribution, and back navigation', () => {
     const onBack = vi.fn()
     render(<StudyMap municipality={packageFixture()} onBack={onBack} />)

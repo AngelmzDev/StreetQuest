@@ -33,7 +33,9 @@ La última orden muestra la ruta del ejecutable en `release/`. La instalación d
 3. **Descarga otro municipio.** Con Internet, escribe el nombre y pulsa «Buscar municipio». Si aparecen varias coincidencias, elige la correcta. Cuando termine la descarga, abre su tarjeta.
 4. **Gestiona las copias.** Desde el catálogo puedes abrir, actualizar o eliminar un mapa. Una actualización fallida conserva la copia anterior.
 
-Esta fase busca municipios españoles con un límite administrativo compatible en OpenStreetMap. Los datos dependen de la cobertura de OpenStreetMap. El mapa incluye vías con nombre de las categorías seleccionadas para el estudio urbano. Los retos y juegos quedan para fases posteriores.
+Desde el mapa puedes elegir **Adivina la calle** para identificar el tramo resaltado entre varias opciones o **Localiza la calle** para pulsar en el mapa el nombre que te pide el juego. Cada partida presenta hasta diez calles distintas, muestra la respuesta después de cada intento y calcula los aciertos al final. Los dos modos funcionan sin conexión con Colmenarejo o con cualquier mapa guardado que tenga suficientes calles.
+
+Esta fase busca municipios españoles con un límite administrativo compatible en OpenStreetMap. Los datos dependen de la cobertura de OpenStreetMap. El mapa incluye vías con nombre de las categorías seleccionadas para el estudio urbano.
 
 Si la búsqueda o descarga tarda demasiado, cancélala y vuelve a intentarlo más tarde. Mientras tanto puedes seguir usando Colmenarejo y los mapas guardados. En la edición web, abre primero la versión compilada con conexión para que el navegador guarde los recursos de la aplicación.
 

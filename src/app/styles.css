@@ -59,7 +59,12 @@ button:disabled { cursor: not-allowed; opacity: .5; }
   .app-shell { padding: 1rem; }
 }
 
-.study-view { min-height: 100vh; display: grid; grid-template-rows: auto 1fr auto; color: #17352d; background: #e8eee9; }
+.study-view { min-height: 100vh; display: grid; grid-template-rows: auto auto 1fr auto; color: #17352d; background: #e8eee9; }
+.game-panel { padding: .75rem 1.25rem; background: #f8f5ed; }
+.game-panel p { margin: 0 0 .4rem; }
+.game-panel strong + p { margin-top: .4rem; }
+.game-actions { display: flex; flex-wrap: wrap; gap: .5rem; align-items: center; }
+.game-panel strong + .game-actions { margin-top: .6rem; }
 .study-header, .study-footer { display: flex; align-items: center; justify-content: space-between; gap: 1rem; padding: 1rem 1.25rem; background: #f8f5ed; }
 .study-header h1 { margin: 0; font-size: clamp(1.8rem, 5vw, 3rem); letter-spacing: -.04em; }
 .street-picker { display: flex; flex-direction: column; gap: .35rem; font-size: .8rem; font-weight: 800; }

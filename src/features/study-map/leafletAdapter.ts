@@ -37,7 +37,7 @@ export function createStudyMap(
   pkg: MunicipalityPackage,
   leaflet: LeafletFacade = leafletFacade,
   onStreetSelected?: (streetId: string, name: string) => void,
-): { destroy(): void; selectStreet(id: string): void } {
+): { destroy(): void; selectStreet(id: string): void; focusStreet(id: string): void; resetView(): void } {
   const renderer = leaflet.canvas({ padding: 0.35, tolerance: 6 })
   const map = leaflet.map(container, {
     renderer,
@@ -68,7 +68,6 @@ export function createStudyMap(
         click: () => {
           const streetId = String(feature.properties?.streetId ?? '')
           const name = String(feature.properties?.name ?? '')
-          selectStreet(streetId)
           onStreetSelected?.(streetId, name)
         },
       })
@@ -76,7 +75,10 @@ export function createStudyMap(
   }).addTo(map)
 
   const [west, south, east, north] = pkg.boundary.bbox
-  map.fitBounds([[south, west], [north, east]], { padding: [24, 24], maxZoom: 17 })
+  function resetView() {
+    map.fitBounds([[south, west], [north, east]], { padding: [24, 24], maxZoom: 17 })
+  }
+  resetView()
 
   function selectStreet(id: string) {
     streetLayer.eachLayer((layer) => {
@@ -84,5 +86,20 @@ export function createStudyMap(
     })
   }
 
-  return { destroy: () => map.remove(), selectStreet }
+  function focusStreet(id: string) {
+    const street = pkg.streets.find((item) => item.id === id)
+    if (!street) return
+    const bounds = Leaflet.latLngBounds([])
+    for (const segment of street.segments) {
+      for (const [lon, lat] of segment.coordinates) bounds.extend([lat, lon])
+    }
+    if (bounds.isValid()) {
+      map.fitBounds([[bounds.getSouth(), bounds.getWest()], [bounds.getNorth(), bounds.getEast()]], {
+        padding: [48, 48],
+        maxZoom: 17,
+      })
+    }
+  }
+
+  return { destroy: () => map.remove(), selectStreet, focusStreet, resetView }
 }
