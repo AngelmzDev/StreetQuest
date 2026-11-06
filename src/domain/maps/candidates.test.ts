@@ -40,4 +40,14 @@ describe('rankCandidates', () => {
     expect(ranked[0]?.confidenceReason).toContain('selección')
     expect(ranked.map((item) => item.osmId)).toEqual([1, 2])
   })
+
+  it('deduplicates repeated Nominatim results for the same relation', () => {
+    const ranked = rankCandidates([
+      candidate({ osmId: 1, displayName: 'Primera copia' }),
+      candidate({ osmId: 1, displayName: 'Segunda copia' }),
+    ], { query: 'Colmenarejo' })
+
+    expect(ranked).toHaveLength(1)
+    expect(ranked[0]?.osmId).toBe(1)
+  })
 })

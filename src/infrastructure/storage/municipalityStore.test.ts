@@ -82,4 +82,16 @@ describe('MunicipalityStore', () => {
       .rejects.toMatchObject({ kind: 'storage-quota', retryable: false })
     expect(await failing.get('relation-1')).toEqual(original)
   })
+
+  it('atomically replaces a superseded relation ID without leaving a duplicate card', async () => {
+    const store = createMunicipalityStore(databaseName())
+    await store.replaceAtomically(packageFixture('relation-1', '2026-11-06T10:00:00.000Z', 'Anterior'))
+    const replacement = packageFixture('relation-2', '2026-11-07T10:00:00.000Z', 'Nuevo')
+
+    await store.replaceAndRemoveAtomically(replacement, 'relation-1')
+
+    expect(await store.get('relation-1')).toBeUndefined()
+    expect(await store.get('relation-2')).toEqual(replacement)
+    expect((await store.list()).map((item) => item.id)).toEqual(['relation-2'])
+  })
 })

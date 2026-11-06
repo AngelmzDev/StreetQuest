@@ -6,6 +6,7 @@ export interface MunicipalityStore {
   list(): Promise<CachedMunicipalitySummary[]>
   get(id: string): Promise<MunicipalityPackage | undefined>
   replaceAtomically(pkg: MunicipalityPackage): Promise<void>
+  replaceAndRemoveAtomically(pkg: MunicipalityPackage, supersededId: string): Promise<void>
   remove(id: string): Promise<void>
 }
 
@@ -33,6 +34,34 @@ export function createMunicipalityStore(
     },
   })
 
+  async function writePackage(pkg: MunicipalityPackage, supersededId?: string): Promise<void> {
+    if (pkg.schemaVersion !== DATABASE_VERSION) {
+      throw mapEngineError('storage', `Versión de paquete no compatible: ${String(pkg.schemaVersion)}`)
+    }
+    const db = await database
+    const transaction = db.transaction([PACKAGE_STORE, SUMMARY_STORE], 'readwrite')
+    try {
+      await transaction.objectStore(PACKAGE_STORE).put(pkg, pkg.id)
+      testOptions.beforeSummaryPut?.()
+      await transaction.objectStore(SUMMARY_STORE).put({
+        id: pkg.id,
+        name: pkg.municipality.municipalityName,
+        province: pkg.municipality.province,
+        streetCount: pkg.streets.length,
+        fetchedAt: pkg.source.fetchedAt,
+      }, pkg.id)
+      if (supersededId && supersededId !== pkg.id) {
+        await transaction.objectStore(PACKAGE_STORE).delete(supersededId)
+        await transaction.objectStore(SUMMARY_STORE).delete(supersededId)
+      }
+      await transaction.done
+    } catch (error) {
+      try { transaction.abort() } catch { /* transaction already completed or aborted */ }
+      try { await transaction.done } catch { /* preserve original failure */ }
+      throw storageError(error)
+    }
+  }
+
   return {
     async list() {
       const db = await database
@@ -45,27 +74,11 @@ export function createMunicipalityStore(
     },
 
     async replaceAtomically(pkg) {
-      if (pkg.schemaVersion !== DATABASE_VERSION) {
-        throw mapEngineError('storage', `Versión de paquete no compatible: ${String(pkg.schemaVersion)}`)
-      }
-      const db = await database
-      const transaction = db.transaction([PACKAGE_STORE, SUMMARY_STORE], 'readwrite')
-      try {
-        await transaction.objectStore(PACKAGE_STORE).put(pkg, pkg.id)
-        testOptions.beforeSummaryPut?.()
-        await transaction.objectStore(SUMMARY_STORE).put({
-          id: pkg.id,
-          name: pkg.municipality.municipalityName,
-          province: pkg.municipality.province,
-          streetCount: pkg.streets.length,
-          fetchedAt: pkg.source.fetchedAt,
-        }, pkg.id)
-        await transaction.done
-      } catch (error) {
-        try { transaction.abort() } catch { /* transaction already completed or aborted */ }
-        try { await transaction.done } catch { /* preserve original failure */ }
-        throw storageError(error)
-      }
+      await writePackage(pkg)
+    },
+
+    async replaceAndRemoveAtomically(pkg, supersededId) {
+      await writePackage(pkg, supersededId)
     },
 
     async remove(id) {

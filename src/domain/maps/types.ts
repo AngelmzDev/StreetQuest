@@ -100,6 +100,7 @@ export type MapEngineErrorKind =
   | 'limit-exceeded'
   | 'storage-quota'
   | 'storage'
+  | 'selection-required'
   | 'not-found'
 
 export interface MapEngineError extends Error {

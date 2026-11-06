@@ -1,14 +1,12 @@
-import { afterEach, describe, expect, it, vi } from 'vitest'
+import { describe, expect, it, vi } from 'vitest'
 import { createNominatimClient } from './nominatimClient'
 import { createOverpassClient } from './overpassClient'
-
-afterEach(() => vi.useRealTimers())
 
 describe('Nominatim client', () => {
   it('searches Spain only on an explicit call and maps complete candidates', async () => {
     const fetchImpl = vi.fn<typeof fetch>().mockResolvedValue(new Response(JSON.stringify([{
       osm_type: 'relation', osm_id: 123, display_name: 'Colmenarejo, Comunidad de Madrid, España',
-      name: 'Colmenarejo', type: 'administrative', addresstype: 'town',
+      name: 'Colmenarejo', category: 'boundary', type: 'administrative', addresstype: 'town',
       boundingbox: ['40.52', '40.59', '-4.05', '-3.96'],
       address: { town: 'Colmenarejo', province: 'Comunidad de Madrid', state: 'Comunidad de Madrid', country: 'España', country_code: 'es' },
       extratags: { admin_level: '8' },
@@ -24,6 +22,15 @@ describe('Nominatim client', () => {
     expect(url.searchParams.get('addressdetails')).toBe('1')
     expect(results[0]).toMatchObject({ osmId: 123, municipalityName: 'Colmenarejo', adminLevel: 8, countryCode: 'es' })
   })
+
+  it('applies an internal deadline when the caller does not cancel', async () => {
+    const fetchImpl = vi.fn<typeof fetch>().mockImplementation((_url, init) => new Promise((_resolve, reject) => {
+      init?.signal?.addEventListener('abort', () => reject(new DOMException('Aborted', 'AbortError')))
+    }))
+    const client = createNominatimClient(fetchImpl, 'https://nominatim.test/search', 5)
+    await expect(client.searchMunicipalities('Colmenarejo', { countryCode: 'es', signal: new AbortController().signal }))
+      .rejects.toMatchObject({ kind: 'timeout', retryable: true })
+  })
 })
 
 describe('Overpass client', () => {
@@ -37,16 +44,12 @@ describe('Overpass client', () => {
   })
 
   it('classifies its own deadline as a retryable timeout', async () => {
-    vi.useFakeTimers()
     const fetchImpl = vi.fn<typeof fetch>().mockImplementation((_url, init) => new Promise((_resolve, reject) => {
       init?.signal?.addEventListener('abort', () => reject(new DOMException('Aborted', 'AbortError')))
     }))
     const client = createOverpassClient(fetchImpl)
-    const request = client.executeOverpass('query', { signal: new AbortController().signal, timeoutMs: 10, maxBytes: 1000 })
-    const expectation = expect(request).rejects.toMatchObject({ kind: 'timeout', retryable: true })
-
-    await vi.advanceTimersByTimeAsync(11)
-    await expectation
+    await expect(client.executeOverpass('query', { signal: new AbortController().signal, timeoutMs: 5, maxBytes: 1000 }))
+      .rejects.toMatchObject({ kind: 'timeout', retryable: true })
   })
 
   it('classifies HTTP 429 without retrying inside the transport', async () => {
@@ -65,6 +68,21 @@ describe('Overpass client', () => {
       .rejects.toMatchObject({ kind: 'invalid-response', retryable: false })
   })
 
+  it('rejects HTTP 200 Overpass runtime remarks instead of accepting partial elements', async () => {
+    const payload = { remark: 'runtime error: Query timed out in query', elements: [{ type: 'way', id: 1 }] }
+    const client = createOverpassClient(vi.fn<typeof fetch>().mockResolvedValue(new Response(JSON.stringify(payload), { status: 200 })))
+
+    await expect(client.executeOverpass('query', { signal: new AbortController().signal, timeoutMs: 100, maxBytes: 10_000 }))
+      .rejects.toMatchObject({ kind: 'timeout', retryable: true })
+  })
+
+  it('classifies non-timeout Overpass runtime failures as retryable partial responses', async () => {
+    const payload = { remark: 'runtime error: out of memory', elements: [] }
+    const client = createOverpassClient(vi.fn<typeof fetch>().mockResolvedValue(new Response(JSON.stringify(payload), { status: 200 })))
+    await expect(client.executeOverpass('query', { signal: new AbortController().signal, timeoutMs: 100, maxBytes: 10_000 }))
+      .rejects.toMatchObject({ kind: 'invalid-response', retryable: true })
+  })
+
   it('aborts before reading a response declared above the byte limit', async () => {
     const client = createOverpassClient(vi.fn<typeof fetch>().mockResolvedValue(new Response('{}', {
       status: 200,
@@ -73,5 +91,21 @@ describe('Overpass client', () => {
 
     await expect(client.executeOverpass('query', { signal: new AbortController().signal, timeoutMs: 100, maxBytes: 1000 }))
       .rejects.toMatchObject({ kind: 'limit-exceeded', retryable: false })
+  })
+
+  it('cancels a streaming body as soon as the byte limit is crossed', async () => {
+    let pulls = 0
+    const body = new ReadableStream<Uint8Array>({
+      pull(controller) {
+        pulls += 1
+        if (pulls <= 10) controller.enqueue(new TextEncoder().encode('1234'))
+        else controller.close()
+      },
+    })
+    const client = createOverpassClient(vi.fn<typeof fetch>().mockResolvedValue(new Response(body, { status: 200 })))
+
+    await expect(client.executeOverpass('query', { signal: new AbortController().signal, timeoutMs: 100, maxBytes: 5 }))
+      .rejects.toMatchObject({ kind: 'limit-exceeded' })
+    expect(pulls).toBeLessThan(10)
   })
 })

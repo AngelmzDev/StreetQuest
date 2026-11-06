@@ -2,6 +2,8 @@ import { mapEngineError, type BBox, type MunicipalityCandidate } from '../../dom
 import { NOMINATIM_ENDPOINT } from './config'
 
 interface NominatimResult {
+  category?: string
+  type?: string
   osm_type?: string
   osm_id?: number
   display_name?: string
@@ -22,7 +24,8 @@ function toNumber(value: string | undefined): number | undefined {
 }
 
 function toCandidate(item: NominatimResult): MunicipalityCandidate | undefined {
-  if (item.osm_type !== 'relation' || typeof item.osm_id !== 'number') return undefined
+  const isAdministrativeBoundary = item.category === 'boundary' && item.type === 'administrative'
+  if (item.osm_type !== 'relation' || typeof item.osm_id !== 'number' || !isAdministrativeBoundary) return undefined
   const address = item.address ?? {}
   const south = toNumber(item.boundingbox?.[0])
   const north = toNumber(item.boundingbox?.[1])
@@ -49,11 +52,15 @@ function toCandidate(item: NominatimResult): MunicipalityCandidate | undefined {
   }
 }
 
-export function createNominatimClient(fetchImpl: typeof fetch = fetch): NominatimClient {
+export function createNominatimClient(
+  fetchImpl: typeof fetch = fetch,
+  endpoint = NOMINATIM_ENDPOINT,
+  timeoutMs = 10_000,
+): NominatimClient {
   return {
     async searchMunicipalities(query, options) {
       if (options.signal.aborted) throw mapEngineError('aborted', 'Búsqueda cancelada')
-      const url = new URL(NOMINATIM_ENDPOINT)
+      const url = new URL(endpoint)
       url.searchParams.set('q', query.trim())
       url.searchParams.set('format', 'jsonv2')
       url.searchParams.set('countrycodes', options.countryCode)
@@ -61,16 +68,25 @@ export function createNominatimClient(fetchImpl: typeof fetch = fetch): Nominati
       url.searchParams.set('extratags', '1')
       url.searchParams.set('limit', '10')
 
+      const controller = new AbortController()
+      let timedOut = false
+      const onCallerAbort = () => controller.abort(options.signal.reason)
+      options.signal.addEventListener('abort', onCallerAbort, { once: true })
+      const timeout = setTimeout(() => { timedOut = true; controller.abort() }, timeoutMs)
       try {
-        const response = await fetchImpl(url, { signal: options.signal, headers: { Accept: 'application/json' } })
+        const response = await fetchImpl(url, { signal: controller.signal, headers: { Accept: 'application/json' } })
         if (!response.ok) throw mapEngineError('network', `Nominatim respondió ${response.status}`, response.status >= 500)
         const payload = await response.json() as unknown
         if (!Array.isArray(payload)) throw mapEngineError('invalid-response', 'Nominatim devolvió un formato inesperado')
         return payload.map((item) => toCandidate(item as NominatimResult)).filter((item): item is MunicipalityCandidate => item !== undefined)
       } catch (error) {
+        if (timedOut) throw mapEngineError('timeout', 'Nominatim tardó demasiado en responder', true, error)
         if (options.signal.aborted) throw mapEngineError('aborted', 'Búsqueda cancelada', false, error)
         if (typeof error === 'object' && error && 'kind' in error) throw error
         throw mapEngineError('network', 'No se pudo consultar Nominatim', true, error)
+      } finally {
+        clearTimeout(timeout)
+        options.signal.removeEventListener('abort', onCallerAbort)
       }
     },
   }

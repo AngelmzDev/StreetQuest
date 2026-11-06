@@ -35,7 +35,7 @@ describe('offline application composition', () => {
     fireEvent.click(await screen.findByRole('button', { name: /abrir colmenarejo/i }))
 
     expect(getSpy).toHaveBeenCalledWith('relation-347003')
-    expect(await screen.findByRole('heading', { name: 'Colmenarejo' })).toBeInTheDocument()
+    expect(await screen.findByRole('heading', { name: 'Colmenarejo', level: 1 })).toBeInTheDocument()
     expect(fetchSpy).not.toHaveBeenCalled()
   })
 

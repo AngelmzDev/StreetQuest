@@ -23,32 +23,49 @@ function fnv1a(value: string): string {
   return (hash >>> 0).toString(36)
 }
 
-function midpointOfFirstEdge(coordinates: Position[]): Position {
+function midpoint(coordinates: Position[]): Position {
   const first = coordinates[0]!
-  const second = coordinates[1]!
-  return [(first[0] + second[0]) / 2, (first[1] + second[1]) / 2]
+  const last = coordinates.at(-1)!
+  return [(first[0] + last[0]) / 2, (first[1] + last[1]) / 2]
 }
 
 function isInsideBoundary(position: Position, boundary: MunicipalityBoundary): boolean {
   const candidate = point(position)
   if (boundary.geometry.type === 'Polygon') {
-    return booleanPointInPolygon(candidate, polygon(boundary.geometry.coordinates))
+    return booleanPointInPolygon(candidate, polygon(boundary.geometry.coordinates), { ignoreBoundary: true })
   }
-  return boundary.geometry.coordinates.some((coordinates) => booleanPointInPolygon(candidate, polygon(coordinates)))
+  return boundary.geometry.coordinates.some((coordinates) => booleanPointInPolygon(candidate, polygon(coordinates), { ignoreBoundary: true }))
+}
+
+function samePosition(left: Position, right: Position): boolean {
+  return Math.abs(left[0] - right[0]) < 1e-10 && Math.abs(left[1] - right[1]) < 1e-10
 }
 
 export function clipWayToBoundary(way: SourceStreetWay, boundary: MunicipalityBoundary): StreetSegment[] {
   if (way.coordinates.length < 2) return []
-  const source = lineString(way.coordinates)
   const boundaryFeature = boundary.geometry.type === 'Polygon'
     ? polygon(boundary.geometry.coordinates)
     : multiPolygon(boundary.geometry.coordinates)
-  const split = lineSplit(source, boundaryFeature)
-  const lines = split.features.length > 0 ? split.features : [source]
-  const parts = lines
-    .map((feature) => feature.geometry.coordinates as Position[])
-    .filter((coordinates) => coordinates.length >= 2 && isInsideBoundary(midpointOfFirstEdge(coordinates), boundary))
-    .sort((a, b) => `${a[0]![0]},${a[0]![1]}`.localeCompare(`${b[0]![0]},${b[0]![1]}`, 'en'))
+  const parts: Position[][] = []
+  for (let index = 1; index < way.coordinates.length; index += 1) {
+    const start = way.coordinates[index - 1]!
+    const end = way.coordinates[index]!
+    const edge = lineString([start, end])
+    const split = lineSplit(edge, boundaryFeature)
+    const lines = (split.features.length > 0 ? split.features : [edge])
+      .map((feature) => feature.geometry.coordinates as Position[])
+      .sort((left, right) => {
+        const distance = (position: Position) => (position[0] - start[0]) ** 2 + (position[1] - start[1]) ** 2
+        return distance(left[0]!) - distance(right[0]!)
+      })
+    for (let coordinates of lines) {
+      if (coordinates.length < 2 || !isInsideBoundary(midpoint(coordinates), boundary)) continue
+      if (!samePosition(coordinates[0]!, start) && samePosition(coordinates.at(-1)!, start)) coordinates = [...coordinates].reverse()
+      const previous = parts.at(-1)
+      if (previous && samePosition(previous.at(-1)!, coordinates[0]!)) previous.push(...coordinates.slice(1))
+      else parts.push([...coordinates])
+    }
+  }
 
   return parts.map((coordinates, partIndex) => ({
     id: `${way.sourceWayId}:${partIndex}`,

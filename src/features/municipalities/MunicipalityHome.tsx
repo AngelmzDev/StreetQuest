@@ -19,6 +19,7 @@ interface HomeState {
   candidates: MunicipalityCandidate[]
   status: string
   error: string
+  active: boolean
 }
 
 type HomeAction =
@@ -27,8 +28,9 @@ type HomeAction =
   | { type: 'status'; status: string }
   | { type: 'error'; error: string }
   | { type: 'clear-feedback' }
+  | { type: 'active'; active: boolean }
 
-const initialState: HomeState = { summaries: [], candidates: [], status: '', error: '' }
+const initialState: HomeState = { summaries: [], candidates: [], status: '', error: '', active: false }
 
 function reducer(state: HomeState, action: HomeAction): HomeState {
   switch (action.type) {
@@ -37,6 +39,7 @@ function reducer(state: HomeState, action: HomeAction): HomeState {
     case 'status': return { ...state, status: action.status, error: '' }
     case 'error': return { ...state, error: action.error, status: '' }
     case 'clear-feedback': return { ...state, status: '', error: '', candidates: [] }
+    case 'active': return { ...state, active: action.active }
   }
 }
 
@@ -54,6 +57,10 @@ function friendlyError(error: unknown): string {
     case 'storage-quota': return 'No queda espacio local. Libera espacio del navegador y vuelve a intentarlo.'
     case 'rate-limited': return 'El servidor de mapas está ocupado. Espera unos minutos antes de reintentar.'
     case 'invalid-boundary': return 'No se pudo validar el límite municipal seleccionado.'
+    case 'timeout': return 'El servidor tardó demasiado. Inténtalo de nuevo dentro de unos minutos.'
+    case 'limit-exceeded': return 'El municipio es demasiado grande para los límites de seguridad actuales.'
+    case 'invalid-response': return 'El servidor devolvió datos no válidos o incompletos. La copia local sigue intacta.'
+    case 'storage': return 'No se pudo acceder al almacenamiento local. Revisa los permisos del navegador.'
     case 'offline': return 'No hay conexión. Puedes seguir usando los municipios guardados.'
     default: return 'No se pudo conectar o completar la operación. La copia guardada no se ha modificado.'
   }
@@ -64,28 +71,37 @@ export function MunicipalityHome({ services, onOpenMunicipality }: MunicipalityH
   const [query, setQuery] = useState('Colmenarejo')
   const online = useOnlineStatus()
   const controller = useRef<AbortController | null>(null)
-  const busy = Boolean(state.status)
+  const pendingSupersedesId = useRef<string | undefined>(undefined)
+  const busy = state.active
 
   const reloadCatalog = useCallback(async () => {
-    dispatch({ type: 'catalog', summaries: await services.store.list() })
+    try {
+      dispatch({ type: 'catalog', summaries: await services.store.list() })
+    } catch (error) {
+      dispatch({ type: 'error', error: friendlyError(error) })
+    }
   }, [services.store])
 
   useEffect(() => { void reloadCatalog() }, [reloadCatalog])
 
   const downloadCandidate = useCallback(async (candidate: MunicipalityCandidate, activeController = new AbortController()) => {
     controller.current = activeController
+    dispatch({ type: 'active', active: true })
     dispatch({ type: 'candidates', candidates: [] })
     try {
       await services.importer.importMunicipality(candidate, {
         signal: activeController.signal,
         onProgress: (phase) => dispatch({ type: 'status', status: PHASE_LABELS[phase] }),
+        supersedesId: pendingSupersedesId.current,
       })
+      pendingSupersedesId.current = undefined
       await reloadCatalog()
       dispatch({ type: 'status', status: `${candidate.municipalityName} está disponible sin conexión.` })
     } catch (error) {
       dispatch({ type: 'error', error: friendlyError(error) })
     } finally {
       controller.current = null
+      dispatch({ type: 'active', active: false })
     }
   }, [reloadCatalog, services.importer])
 
@@ -94,6 +110,8 @@ export function MunicipalityHome({ services, onOpenMunicipality }: MunicipalityH
     if (!online || busy || !query.trim()) return
     const activeController = new AbortController()
     controller.current = activeController
+    pendingSupersedesId.current = undefined
+    dispatch({ type: 'active', active: true })
     dispatch({ type: 'status', status: 'Buscando el municipio…' })
     try {
       const result = await services.importer.discoverMunicipalities({ query: query.trim(), signal: activeController.signal })
@@ -103,17 +121,23 @@ export function MunicipalityHome({ services, onOpenMunicipality }: MunicipalityH
     } catch (error) {
       dispatch({ type: 'error', error: friendlyError(error) })
       controller.current = null
+    } finally {
+      if (controller.current === activeController) {
+        controller.current = null
+        dispatch({ type: 'active', active: false })
+      }
     }
   }
 
   async function refresh(summary: CachedMunicipalitySummary) {
     if (!online || busy) return
-    const cached = await services.store.get(summary.id)
-    if (!cached) return reloadCatalog()
     const activeController = new AbortController()
     controller.current = activeController
+    dispatch({ type: 'active', active: true })
     dispatch({ type: 'status', status: `Actualizando ${summary.name}…` })
     try {
+      const cached = await services.store.get(summary.id)
+      if (!cached) { await reloadCatalog(); return }
       await services.importer.refreshMunicipality(cached, {
         signal: activeController.signal,
         onProgress: (phase) => dispatch({ type: 'status', status: PHASE_LABELS[phase] }),
@@ -121,16 +145,27 @@ export function MunicipalityHome({ services, onOpenMunicipality }: MunicipalityH
       await reloadCatalog()
       dispatch({ type: 'status', status: `${summary.name} se ha actualizado.` })
     } catch (error) {
-      dispatch({ type: 'error', error: friendlyError(error) })
+      if (typeof error === 'object' && error !== null && 'kind' in error && error.kind === 'selection-required' && 'cause' in error) {
+        const cause = error.cause as { candidates?: MunicipalityCandidate[]; supersedesId?: string }
+        if (cause.candidates && cause.supersedesId) {
+          pendingSupersedesId.current = cause.supersedesId
+          dispatch({ type: 'candidates', candidates: cause.candidates })
+        } else dispatch({ type: 'error', error: friendlyError(error) })
+      } else dispatch({ type: 'error', error: friendlyError(error) })
     } finally {
       controller.current = null
+      dispatch({ type: 'active', active: false })
     }
   }
 
   async function remove(summary: CachedMunicipalitySummary) {
     if (!window.confirm(`¿Eliminar la copia local de ${summary.name}?`)) return
-    await services.store.remove(summary.id)
-    await reloadCatalog()
+    try {
+      await services.store.remove(summary.id)
+      await reloadCatalog()
+    } catch (error) {
+      dispatch({ type: 'error', error: friendlyError(error) })
+    }
   }
 
   return (

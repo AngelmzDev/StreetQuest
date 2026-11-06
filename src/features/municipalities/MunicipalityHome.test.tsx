@@ -17,6 +17,7 @@ function services(options: { summaries?: CachedMunicipalitySummary[]; discovery?
     list: vi.fn(async () => options.summaries ?? []),
     get: vi.fn(async () => ({ id: summary.id } as MunicipalityPackage)),
     replaceAtomically: vi.fn(async () => undefined),
+    replaceAndRemoveAtomically: vi.fn(async () => undefined),
     remove: vi.fn(async () => undefined),
   }
   const importer = {
@@ -99,6 +100,16 @@ describe('MunicipalityHome', () => {
     expect(activeSignal?.aborted).toBe(true)
   })
 
+  it('re-enables search and removes Cancel after a successful import', async () => {
+    setOnline(true)
+    const appServices = services()
+    render(<MunicipalityHome services={appServices} onOpenMunicipality={() => undefined} />)
+    fireEvent.click(screen.getByRole('button', { name: /buscar municipio/i }))
+    await screen.findByText(/disponible sin conexión/i)
+    expect(screen.getByRole('button', { name: /buscar municipio/i })).toBeEnabled()
+    expect(screen.queryByRole('button', { name: /cancelar/i })).not.toBeInTheDocument()
+  })
+
   it('keeps a cached card visible when refresh fails', async () => {
     setOnline(true)
     const appServices = services({ summaries: [summary] })
@@ -124,6 +135,10 @@ describe('MunicipalityHome', () => {
   it.each([
     [mapEngineError('storage-quota', 'full'), /libera espacio/i],
     [mapEngineError('rate-limited', 'slow'), /servidor.*ocupado/i],
+    [mapEngineError('timeout', 'slow', true), /tardó demasiado/i],
+    [mapEngineError('limit-exceeded', 'large'), /demasiado grande/i],
+    [mapEngineError('invalid-response', 'bad'), /datos no válidos/i],
+    [mapEngineError('storage', 'denied'), /almacenamiento local/i],
   ])('shows actionable guidance for typed failures', async (failure, expected) => {
     setOnline(true)
     const appServices = services({ importFailure: failure })

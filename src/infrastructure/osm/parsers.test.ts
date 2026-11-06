@@ -32,6 +32,36 @@ describe('parseMunicipalityBoundary', () => {
     const payload = { elements: [{ type: 'relation', id: 9, members: [{ type: 'way', ref: 1, role: 'inner', geometry: [] }], tags: { name: 'Rota' } }] }
     expect(() => parseMunicipalityBoundary(payload, 9)).toThrowError(expect.objectContaining({ kind: 'invalid-boundary' }))
   })
+
+  it('rejects a relation when any required inner member geometry is missing', () => {
+    const payload = structuredClone(enclave)
+    payload.elements[0]!.members[1]!.geometry = []
+    expect(() => parseMunicipalityBoundary(payload, 800)).toThrowError(expect.objectContaining({ kind: 'invalid-boundary' }))
+  })
+
+  it('rejects a detached inner member even when another enclave remains valid', () => {
+    const payload = structuredClone(enclave)
+    payload.elements[0]!.members.push({
+      type: 'way', ref: 999, role: 'inner',
+      geometry: [{ lat: 20, lon: 20 }, { lat: 20, lon: 21 }, { lat: 21, lon: 20 }, { lat: 20, lon: 20 }],
+    })
+    expect(() => parseMunicipalityBoundary(payload, 800)).toThrowError(expect.objectContaining({ kind: 'invalid-boundary' }))
+  })
+
+  it('accepts an outer ring assembled from multiple two-node members', () => {
+    const payload = { elements: [{ type: 'relation', id: 10, members: [
+      { type: 'way', ref: 1, role: 'outer', geometry: [{ lat: 0, lon: 0 }, { lat: 0, lon: 1 }] },
+      { type: 'way', ref: 2, role: 'outer', geometry: [{ lat: 0, lon: 1 }, { lat: 1, lon: 1 }] },
+      { type: 'way', ref: 3, role: 'outer', geometry: [{ lat: 1, lon: 1 }, { lat: 0, lon: 0 }] },
+    ], tags: { name: 'Partido', boundary: 'administrative', type: 'boundary', admin_level: '8' } }] }
+    expect(parseMunicipalityBoundary(payload, 10).geometry.type).toBe('Polygon')
+  })
+
+  it('rejects a non-administrative protected-area relation', () => {
+    const payload = structuredClone(colmenarejo)
+    payload.elements[0]!.tags.boundary = 'protected_area'
+    expect(() => parseMunicipalityBoundary(payload, 347003)).toThrowError(expect.objectContaining({ kind: 'invalid-boundary' }))
+  })
 })
 
 describe('parseStreetWays', () => {
@@ -41,5 +71,10 @@ describe('parseStreetWays', () => {
     expect(parsed).toHaveLength(3)
     expect(parsed.map((way) => way.sourceWayId)).toEqual([101, 102, 103])
     expect(parsed.some((way) => way.highway === 'footway')).toBe(false)
+  })
+
+  it('rejects a marked partial Overpass response defensively', () => {
+    expect(() => parseStreetWays({ remark: 'runtime error: Query timed out', elements: streets.elements.slice(0, 1) }))
+      .toThrowError(expect.objectContaining({ kind: 'timeout' }))
   })
 })

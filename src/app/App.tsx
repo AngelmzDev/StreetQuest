@@ -20,6 +20,7 @@ const defaultServices: AppServices = {
 
 export function App({ services = defaultServices }: { services?: AppServices }) {
   const [selected, setSelected] = useState<MunicipalityPackage | null>(null)
+  const [openError, setOpenError] = useState('')
 
   if (selected) return <StudyMap municipality={selected} onBack={() => setSelected(null)} />
 
@@ -35,8 +36,11 @@ export function App({ services = defaultServices }: { services?: AppServices }) 
         <p className="attribution">© OpenStreetMap contributors</p>
       </section>
       <MunicipalityHome services={services} onOpenMunicipality={(id) => {
-        void services.store.get(id).then((pkg) => { if (pkg) setSelected(pkg) })
+        void services.store.get(id)
+          .then((pkg) => { if (pkg) setSelected(pkg); else setOpenError('El mapa guardado ya no está disponible.') })
+          .catch(() => setOpenError('No se pudo abrir el mapa desde el almacenamiento local.'))
       }} />
+      {openError && <p role="alert" className="error-message">{openError}</p>}
     </main>
   )
 }

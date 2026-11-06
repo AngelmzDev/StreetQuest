@@ -10,7 +10,8 @@ export function rankCandidates(
 ): MunicipalityCandidate[] {
   const query = normalize(request.query)
   const province = normalize(request.province)
-  const scored = candidates.map((candidate) => {
+  const unique = [...new Map(candidates.map((candidate) => [candidate.osmId, candidate])).values()]
+  const scored = unique.map((candidate) => {
     let confidence = 0
     const reasons: string[] = []
     if (normalize(candidate.municipalityName) === query) {

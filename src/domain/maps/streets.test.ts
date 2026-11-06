@@ -49,6 +49,27 @@ describe('clipWayToBoundary', () => {
 
     expect(clipWayToBoundary(way([[-1, 2], [5, 2]]), boundary)).toHaveLength(2)
   })
+
+  it('does not retain an outside edge after touching and leaving the boundary', () => {
+    const boundary: MunicipalityBoundary = {
+      ...squareBoundary, bbox: [0, 0, 4, 4], geometry: { type: 'Polygon', coordinates: [
+        [[0, 0], [4, 0], [4, 4], [0, 4], [0, 0]],
+      ] },
+    }
+    const parts = clipWayToBoundary(way([[-1, 0], [0, 0], [0, 2], [-1, 2]]), boundary)
+    expect(parts.flatMap((part) => part.coordinates)).not.toContainEqual([-1, 2])
+  })
+
+  it('does not retain a segment that lies on an enclave boundary', () => {
+    const boundary: MunicipalityBoundary = {
+      ...squareBoundary, bbox: [0, 0, 4, 4], geometry: { type: 'Polygon', coordinates: [
+        [[0, 0], [4, 0], [4, 4], [0, 4], [0, 0]],
+        [[1, 1], [1, 3], [3, 3], [3, 1], [1, 1]],
+      ] },
+    }
+    const parts = clipWayToBoundary(way([[-1, 1], [1, 1], [3, 1], [5, 1]]), boundary)
+    expect(parts.some((part) => part.coordinates.some(([x, y]) => y === 1 && x > 1 && x < 3))).toBe(false)
+  })
 })
 
 describe('groupStreetSegments', () => {
