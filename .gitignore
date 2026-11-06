@@ -8,5 +8,6 @@ playwright-report/
 test-results/
 *.local
 *.log
+*.tsbuildinfo
 .DS_Store
 Thumbs.db

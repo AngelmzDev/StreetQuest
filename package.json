@@ -2,6 +2,12 @@
   "name": "streetquest",
   "private": true,
   "version": "0.1.0",
+  "description": "Offline-first municipal street learning with OpenStreetMap vectors.",
+  "license": "MIT",
+  "packageManager": "pnpm@11.25.0",
+  "engines": {
+    "node": ">=22"
+  },
   "type": "module",
   "scripts": {
     "dev": "vite",
