@@ -29,6 +29,14 @@ function midpointOfFirstEdge(coordinates: Position[]): Position {
   return [(first[0] + second[0]) / 2, (first[1] + second[1]) / 2]
 }
 
+function isInsideBoundary(position: Position, boundary: MunicipalityBoundary): boolean {
+  const candidate = point(position)
+  if (boundary.geometry.type === 'Polygon') {
+    return booleanPointInPolygon(candidate, polygon(boundary.geometry.coordinates))
+  }
+  return boundary.geometry.coordinates.some((coordinates) => booleanPointInPolygon(candidate, polygon(coordinates)))
+}
+
 export function clipWayToBoundary(way: SourceStreetWay, boundary: MunicipalityBoundary): StreetSegment[] {
   if (way.coordinates.length < 2) return []
   const source = lineString(way.coordinates)
@@ -39,7 +47,7 @@ export function clipWayToBoundary(way: SourceStreetWay, boundary: MunicipalityBo
   const lines = split.features.length > 0 ? split.features : [source]
   const parts = lines
     .map((feature) => feature.geometry.coordinates as Position[])
-    .filter((coordinates) => coordinates.length >= 2 && booleanPointInPolygon(point(midpointOfFirstEdge(coordinates)), boundaryFeature))
+    .filter((coordinates) => coordinates.length >= 2 && isInsideBoundary(midpointOfFirstEdge(coordinates), boundary))
     .sort((a, b) => `${a[0]![0]},${a[0]![1]}`.localeCompare(`${b[0]![0]},${b[0]![1]}`, 'en'))
 
   return parts.map((coordinates, partIndex) => ({
