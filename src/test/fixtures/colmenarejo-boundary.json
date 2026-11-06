@@ -1,0 +1,25 @@
+{
+  "version": 0.6,
+  "generator": "Overpass API (condensed fixture)",
+  "osm3s": { "timestamp_osm_base": "2026-11-06T00:00:00Z" },
+  "elements": [
+    {
+      "type": "relation",
+      "id": 347003,
+      "members": [
+        {
+          "type": "way",
+          "ref": 99001,
+          "role": "outer",
+          "geometry": [
+            { "lat": 40.4856667, "lon": -4.0548953 },
+            { "lat": 40.5841665, "lon": -4.0548953 },
+            { "lat": 40.5841665, "lon": -3.9844494 },
+            { "lat": 40.4856667, "lon": -3.9844494 }
+          ]
+        }
+      ],
+      "tags": { "admin_level": "8", "boundary": "administrative", "name": "Colmenarejo", "type": "boundary" }
+    }
+  ]
+}
