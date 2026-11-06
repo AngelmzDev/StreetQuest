@@ -158,3 +158,5 @@ export function createMunicipalityImporter(dependencies: ImporterDependencies) {
 
   return { discoverMunicipalities, importMunicipality, refreshMunicipality }
 }
+
+export type MunicipalityImporter = ReturnType<typeof createMunicipalityImporter>
