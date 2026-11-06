@@ -1,107 +1,71 @@
+![Maqueta isométrica de un municipio con una calle destacada](docs/media/streetquest-banner.png)
+
 # StreetQuest
 
-🗺️ Turn any town into a learning adventure. Master streets, explore maps, complete challenges, and learn your city through interactive games. Open-source &amp; free.
+**Aprende las calles de tu municipio con un mapa que puedes llevar sin conexión.**
 
-StreetQuest convierte los datos abiertos de un municipio en un mapa de estudio vectorial. Descarga el municipio una vez y después puedes recorrer sus calles sin conexión, sin etiquetas y sin depender de teselas en línea.
+StreetQuest muestra calles vectoriales sin etiquetas permanentes. Explora el mapa, selecciona una calle para ver su nombre o elígela en el listado para localizarla. Colmenarejo viene incluido con datos reales de OpenStreetMap y se puede abrir sin Internet desde el primer arranque en Windows.
 
-## Primera fase
+- [Descargar y abrir en Windows](#descargar-y-abrir-en-windows)
+- [Guía de uso](#guía-de-uso)
+- [Desarrollo y pruebas](#desarrollo-y-pruebas)
+- [Datos y licencias](#datos-y-licencias)
 
-Esta rama incorpora el motor municipal sobre el que se construirán los retos y juegos:
+## Descargar y abrir en Windows
 
-- búsqueda de municipios españoles mediante Nominatim;
-- límites administrativos Polygon/MultiPolygon validados, incluidos enclaves y áreas separadas;
-- descarga acotada de vías desde Overpass;
-- recorte de geometrías contra el límite municipal y agrupación de tramos por nombre;
-- paquetes versionados y reemplazo atómico en IndexedDB;
-- catálogo local, actualización manual y funcionamiento offline;
-- mapa Leaflet Canvas sin capa de teselas ni etiquetas persistentes;
-- Colmenarejo como fixture y municipio inicial de demostración.
+Si hay un paquete portable publicado en [GitHub Releases](https://github.com/AngelmzDev/StreetQuest/releases), descarga el ZIP para Windows x64, extráelo y abre **StreetQuest.exe**. Conserva la carpeta extraída completa junto al ejecutable. El programa guarda los mapas en el perfil local de Windows.
 
-## Requisitos
+Puedes generar el paquete desde el código si aún no hay un ZIP publicado. Necesitas Windows, Git, Node.js 22 o posterior y pnpm 11.
 
-- Node.js 22 o posterior.
-- pnpm 11 (`corepack enable` y `corepack prepare pnpm@11.25.0 --activate` si no está disponible).
-- Un navegador moderno con IndexedDB y Service Workers.
+```powershell
+git clone --branch feat/phase-1-map-engine https://github.com/AngelmzDev/StreetQuest.git
+cd StreetQuest
+pnpm install --frozen-lockfile
+pnpm build:windows
+```
 
-## Desarrollo
+La última orden muestra la ruta del ejecutable en `release/`. La instalación de dependencias y del motor de escritorio requiere Internet. Colmenarejo y los mapas guardados se pueden usar sin conexión.
 
-```bash
-pnpm install
+## Guía de uso
+
+1. **Abre Colmenarejo.** Pulsa «Explorar Colmenarejo». La aplicación prepara y guarda el extracto incluido. Después puedes volver a abrirlo desde «Tus mapas sin conexión».
+2. **Estudia el plano.** Desplázate y cambia el zoom. Pulsa un tramo para descubrir su nombre o selecciona una calle en la lista para resaltarla.
+3. **Descarga otro municipio.** Con Internet, escribe el nombre y pulsa «Buscar municipio». Si aparecen varias coincidencias, elige la correcta. Cuando termine la descarga, abre su tarjeta.
+4. **Gestiona las copias.** Desde el catálogo puedes abrir, actualizar o eliminar un mapa. Una actualización fallida conserva la copia anterior.
+
+Esta fase busca municipios españoles con un límite administrativo compatible en OpenStreetMap. Los datos dependen de la cobertura de OpenStreetMap. El mapa incluye vías con nombre de las categorías seleccionadas para el estudio urbano. Los retos y juegos quedan para fases posteriores.
+
+Si la búsqueda o descarga tarda demasiado, cancélala y vuelve a intentarlo más tarde. Mientras tanto puedes seguir usando Colmenarejo y los mapas guardados. En la edición web, abre primero la versión compilada con conexión para que el navegador guarde los recursos de la aplicación.
+
+## Desarrollo y pruebas
+
+StreetQuest usa React, TypeScript, Vite y Leaflet. Nominatim busca municipios y Overpass descarga sus límites y vías. El motor recorta los tramos al límite municipal, agrupa calles por nombre y guarda los paquetes en IndexedDB. Electron ejecuta el mismo mapa en Windows desde los recursos locales. La edición web usa un *service worker* para recargar sin conexión.
+
+```sh
+pnpm install --frozen-lockfile
 pnpm dev
 ```
 
-La aplicación se abre en la dirección indicada por Vite. La búsqueda se ejecuta únicamente al enviar el formulario; no implementa autocompletado contra Nominatim.
-
-Scripts disponibles:
-
-| Comando | Uso |
+| Comando | Qué comprueba o genera |
 | --- | --- |
-| `pnpm dev` | Servidor local de desarrollo |
-| `pnpm build` | Comprobación TypeScript y build PWA de producción |
-| `pnpm preview` | Sirve el último build local |
-| `pnpm test -- --run` | Suite unitaria y de integración |
-| `pnpm test:e2e` | Prueba offline real en navegador (requiere un build previo) |
-| `pnpm typecheck` | Tipos estrictos |
-| `pnpm lint` | Reglas de calidad |
+| `pnpm lint` | Reglas de calidad del código |
+| `pnpm typecheck` | Tipos de TypeScript |
+| `pnpm exec vitest run` | Pruebas unitarias y de integración |
+| `pnpm build` | Versión web de producción |
+| `pnpm exec playwright test e2e/offline.spec.ts` | Reapertura sin conexión en navegador |
+| `pnpm build:windows` | Paquete portable para Windows |
 
-Verificación completa:
+Para probar el ejecutable empaquetado, usa PowerShell y la ruta que imprimió la compilación:
 
-```bash
-pnpm install --frozen-lockfile
-pnpm lint
-pnpm typecheck
-pnpm test -- --run
-pnpm build
-pnpm test:e2e
+```powershell
+$env:STREETQUEST_WINDOWS_EXE = (Resolve-Path 'release/<carpeta-generada>/StreetQuest.exe').Path
+pnpm exec playwright test e2e/windows.spec.ts --workers=1
 ```
 
-## Uso sin conexión
+La prueba abre el mapa real de Colmenarejo con la red desactivada, selecciona una calle y comprueba que la copia persiste tras reiniciar la aplicación. La descarga desde Nominatim y Overpass se comprueba por separado con `STREETQUEST_LIVE=1` y `e2e/live-import.spec.ts`. Esa prueba depende de la disponibilidad de los servicios externos.
 
-«Explorar Colmenarejo» abre el mapa incluido, obtenido de OpenStreetMap.
-Está disponible desde el primer arranque de la edición Windows, sin descarga
-previa. El catálogo guarda la copia en el perfil local de StreetQuest.
+Para usar otros servidores compatibles, copia `.env.example` a `.env.local` y configura `VITE_NOMINATIM_ENDPOINT` y `VITE_OVERPASS_ENDPOINT` antes de compilar. El motor limita las descargas por tiempo, tamaño y cantidad de geometrías. Consulta [la arquitectura](docs/architecture.md) para más detalles.
 
-En Windows, ejecuta `pnpm build:windows` para generar una carpeta portable
-en `release/`. Abre `StreetQuest.exe` desde esa carpeta y conserva junto al
-ejecutable los archivos que se generaron con él.
+## Datos y licencias
 
-1. Con conexión, busca un municipio y confirma el candidato correcto cuando exista ambigüedad.
-2. StreetQuest descarga el límite y las calles, valida el paquete y lo guarda en IndexedDB.
-3. Abre el municipio desde «Tus mapas sin conexión».
-4. En visitas posteriores el Service Worker sirve la aplicación y el mapa usa exclusivamente las geometrías locales.
-
-Una actualización nunca sustituye la copia anterior hasta que el nuevo paquete ha pasado todas las validaciones y se ha guardado de forma atómica. Puedes eliminar cualquier paquete desde su tarjeta.
-
-## Configuración de servicios
-
-Copia `.env.example` a `.env.local` para usar instancias propias:
-
-```dotenv
-VITE_NOMINATIM_ENDPOINT=https://nominatim.openstreetmap.org/search
-VITE_OVERPASS_ENDPOINT=https://overpass-api.de/api/interpreter
-```
-
-Los endpoints deben usar HTTPS (se permite HTTP únicamente para `localhost`/`127.0.0.1`). Respeta las políticas de uso de cada servicio: consultas explícitas, sin autocompletado y sin descargas concurrentes agresivas. Para uso público sostenido, despliega instancias propias o un proveedor con capacidad acordada.
-
-## Límites de seguridad
-
-Una importación se cancela antes de persistir datos parciales cuando supera cualquiera de estos límites:
-
-- 64 MiB por respuesta descargada;
-- 250.000 elementos OSM;
-- 2.000.000 de coordenadas;
-- 128 MiB para el paquete serializado final.
-
-Estos límites protegen el navegador frente a respuestas anómalas; no son límites de población o superficie del municipio.
-
-## Datos y limitaciones
-
-StreetQuest refleja OpenStreetMap en el momento de la descarga. Los nombres incompletos, calles ausentes, relaciones administrativas rotas o clasificaciones discutibles deben corregirse en OpenStreetMap. Las vías sin nombre y senderos/caminos no destinados al estudio urbano quedan fuera de esta fase.
-
-Los fixtures son extractos condensados de estructuras Overpass: Colmenarejo usa la relación OSM `347003`; el fixture de enclaves es sintético y prueba topologías difíciles sin consultar servicios durante la suite.
-
-Consulta [la arquitectura](docs/architecture.md) y [la atribución de datos](ATTRIBUTION.md) para más detalles.
-
-## Licencias
-
-El código de StreetQuest se distribuye bajo la licencia MIT. Los datos derivados de OpenStreetMap no se relicencian bajo MIT: permanecen sujetos a ODbL. Consulta `LICENSE` y `ATTRIBUTION.md`.
+El código se distribuye bajo la [licencia MIT](LICENSE). El mapa incluido y los datos derivados de OpenStreetMap se distribuyen bajo [ODbL 1.0](https://opendatacommons.org/licenses/odbl/1-0/), con atribución a [© OpenStreetMap contributors](https://www.openstreetmap.org/copyright). La portada es una ilustración inspirada en Colmenarejo. Consulta [la atribución de datos](ATTRIBUTION.md) para conocer la procedencia del extracto.
