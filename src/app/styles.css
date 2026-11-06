@@ -58,3 +58,17 @@ button:disabled { cursor: not-allowed; opacity: .5; }
   .search-row { flex-direction: column; }
   .app-shell { padding: 1rem; }
 }
+
+.study-view { min-height: 100vh; display: grid; grid-template-rows: auto 1fr auto; color: #17352d; background: #e8eee9; }
+.study-header, .study-footer { display: flex; align-items: center; justify-content: space-between; gap: 1rem; padding: 1rem 1.25rem; background: #f8f5ed; }
+.study-header h1 { margin: 0; font-size: clamp(1.8rem, 5vw, 3rem); letter-spacing: -.04em; }
+.street-picker { display: flex; flex-direction: column; gap: .35rem; font-size: .8rem; font-weight: 800; }
+.street-picker select { max-width: 18rem; padding: .55rem; border: 1px solid #aabdb4; border-radius: .6rem; background: white; }
+.study-map { min-height: 65vh; background: #e7eee9; }
+.study-footer { font-size: .85rem; }
+.study-footer span { opacity: .72; }
+
+@media (max-width: 48rem) {
+  .study-header { align-items: stretch; flex-direction: column; }
+  .study-footer { align-items: flex-start; flex-direction: column; }
+}
