@@ -71,7 +71,7 @@ function friendlyError(error: unknown): string {
 
 export function MunicipalityHome({ services, onOpenMunicipality }: MunicipalityHomeProps) {
   const [state, dispatch] = useReducer(reducer, initialState)
-  const [query, setQuery] = useState('Colmenarejo')
+  const [query, setQuery] = useState('Madrid')
   const [importing, setImporting] = useState(false)
   const online = useOnlineStatus()
   const controller = useRef<AbortController | null>(null)
@@ -175,9 +175,9 @@ export function MunicipalityHome({ services, onOpenMunicipality }: MunicipalityH
   return (
     <section className="municipality-home" aria-labelledby="municipality-home-title">
       <div className="section-heading">
-        <p className="eyebrow">Motor municipal</p>
-        <h2 id="municipality-home-title">Tus mapas sin conexión</h2>
-        <p>Descarga calles y límites vectoriales; después no necesitarás teselas ni conexión.</p>
+        <p className="eyebrow">TU SIGUIENTE AVENTURA</p>
+        <h2 id="municipality-home-title">Elige dónde jugar</h2>
+        <p>Busca un municipio y guarda sus calles en este dispositivo para explorar y practicar sin conexión.</p>
       </div>
 
       {!online && <p className="offline-note">Sin conexión: puedes abrir los municipios guardados.</p>}
@@ -192,7 +192,7 @@ export function MunicipalityHome({ services, onOpenMunicipality }: MunicipalityH
       <details className="search-card">
         <summary>Servicios de mapas y ayuda</summary>
         <p>Búsqueda: {new URL(NOMINATIM_ENDPOINT).host}. Geometrías: {new URL(OVERPASS_ENDPOINT).host}.</p>
-        <p>Si el servidor público está ocupado, espera antes de reintentar. Puedes abrir Colmenarejo o importar un paquete local mientras tanto.</p>
+        <p>Si el servidor público está ocupado, espera antes de reintentar. Puedes abrir Madrid o importar un paquete local mientras tanto.</p>
       </details>
       <MunicipalityTransferPanel store={services.store} disabled={busy} onSaved={reloadCatalog} onBusy={(active) => {
         setImporting(active)

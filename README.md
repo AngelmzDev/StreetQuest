@@ -10,7 +10,7 @@
 
 StreetQuest es una aplicación para Windows con la que puedes estudiar y poner a prueba cuánto conoces las calles de tu ciudad o pueblo. Busca un municipio español, descarga su mapa desde OpenStreetMap una vez y guárdalo en tu equipo. Después podrás explorarlo y jugar sin Internet: el plano no necesita cargar teselas en línea y los juegos ocultan los nombres hasta que respondes.
 
-La aplicación incluye Colmenarejo como mapa de ejemplo para que puedas probarla nada más abrirla. **Puedes buscar y guardar otros municipios desde la propia aplicación**, siempre que OpenStreetMap tenga los datos necesarios y el municipio se ajuste a los límites de descarga actuales.
+La aplicación incluye Madrid capital como mapa preparado para que puedas probarla nada más abrirla, también sin conexión después de la primera carga. **Puedes buscar y guardar otros municipios desde la propia aplicación**, siempre que OpenStreetMap tenga los datos necesarios y el municipio se ajuste a los límites de descarga actuales.
 
 - [Descargar la aplicación](#descargar-la-aplicación)
 - [Empezar con tu municipio](#empezar-con-tu-municipio)
@@ -39,7 +39,9 @@ Es una aplicación portable: no necesitas instalar Node.js ni ejecutar un instal
 3. Abre la nueva tarjeta en **Tus mapas sin conexión**. La app agrupa los tramos que pertenecen a una misma calle para estudiarlos como una unidad.
 4. Vuelve a esa tarjeta cuando quieras: el mapa ya está guardado. Puedes descargar otros municipios de la misma manera y cambiar entre ellos desde la pantalla inicial.
 
-Si quieres probar primero la aplicación sin descargar nada, abre el mapa de ejemplo **Colmenarejo** que viene incluido en la versión para Windows. Para practicar con tu propia ciudad o pueblo, sigue los pasos anteriores.
+Si quieres probar primero la aplicación sin consultar los servidores de mapas, abre **Madrid** desde la portada. La primera apertura guarda el mapa preparado en este dispositivo. Para practicar con tu propia ciudad o pueblo, sigue los pasos anteriores.
+
+Los datos incluidos de Madrid proceden de [OpenStreetMap](https://www.openstreetmap.org/copyright) mediante el extracto de [BBBike](https://download.bbbike.org/osm/bbbike/Madrid/) y se distribuyen bajo ODbL. La copia incluida es una instantánea; usa **Actualizar** para consultar datos nuevos cuando estén disponibles.
 
 ## Explorar y jugar
 

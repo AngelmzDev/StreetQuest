@@ -2,11 +2,12 @@
 
 StreetQuest utiliza datos de OpenStreetMap obtenidos mediante servicios compatibles con Nominatim y Overpass.
 
-El archivo `public/colmenarejo-osm.json` contiene un extracto de OpenStreetMap
-distribuido bajo ODbL 1.0. Incluye la relación 347003 y vías con nombre
-de su entorno obtenidas de la API de OpenStreetMap. El campo `capturedAt`
-registra la fecha de captura. El script `desktop/capture-colmenarejo.ps1`
-documenta cómo se generó el extracto.
+El archivo `public/madrid-package.json` contiene un mapa preparado de Madrid capital
+distribuido bajo ODbL 1.0. Incluye el límite municipal de la relación 5326784,
+consultado en la API de OpenStreetMap, y vías con nombre procedentes del extracto
+de [Madrid de BBBike](https://download.bbbike.org/osm/bbbike/Madrid/). El campo
+`source.fetchedAt` registra la fecha de preparación. El paquete se ofrece
+preparado para evitar una consulta masiva al abrir la aplicación.
 
 ## Aviso visible
 
@@ -20,7 +21,7 @@ StreetQuest transforma los datos al:
 
 - seleccionar límites administrativos y vías con nombre;
 - reconstruir polígonos y multipolígonos;
-- recortar tramos contra el límite municipal;
+- seleccionar los tramos cuyos dos extremos están dentro del límite municipal;
 - agrupar tramos por un nombre normalizado;
 - almacenar el resultado en IndexedDB.
 

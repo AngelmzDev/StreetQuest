@@ -48,12 +48,12 @@ describe('MunicipalityHome', () => {
     fireEvent.click(screen.getByRole('button', { name: /buscar municipio/i }))
     await screen.findByText(/disponible sin conexión/i)
   })
-  it('prefills Colmenarejo and searches only after explicit submission', async () => {
+  it('prefills Madrid and searches only after explicit submission', async () => {
     setOnline(true)
     const appServices = services()
     render(<MunicipalityHome services={appServices} onOpenMunicipality={() => undefined} />)
 
-    expect(screen.getByRole('textbox', { name: /municipio/i })).toHaveValue('Colmenarejo')
+    expect(screen.getByRole('textbox', { name: /municipio/i })).toHaveValue('Madrid')
     expect(appServices.importer.discoverMunicipalities).not.toHaveBeenCalled()
     fireEvent.click(screen.getByRole('button', { name: /buscar municipio/i }))
     await waitFor(() => expect(appServices.importer.discoverMunicipalities).toHaveBeenCalledOnce())

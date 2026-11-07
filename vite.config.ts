@@ -20,7 +20,7 @@ export default defineConfig({
       },
       workbox: {
         maximumFileSizeToCacheInBytes: 16 * 1024 * 1024,
-        globPatterns: ['**/*.{js,css,html,svg,webmanifest}', 'colmenarejo-osm.json'],
+        globPatterns: ['**/*.{js,css,html,svg,webmanifest}', 'madrid-package.json'],
         navigateFallback: 'index.html',
         runtimeCaching: [],
       },
