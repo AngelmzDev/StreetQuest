@@ -1,3 +1,7 @@
+<p align="center">
+  <img src="docs/branding/logo.svg" alt="Logo de StreetQuest" width="128" height="128">
+</p>
+
 ![Maqueta isométrica de un municipio con una calle destacada](docs/media/streetquest-banner.png)
 
 # StreetQuest
