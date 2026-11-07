@@ -20,6 +20,10 @@ La aplicación incluye Colmenarejo como mapa de ejemplo para que puedas probarla
 - [Desarrollo y pruebas](#desarrollo-y-pruebas)
 - [Datos y licencias](#datos-y-licencias)
 
+## Presentación en 30 segundos
+
+![Presentación animada de StreetQuest: mapa, estudio y juegos sin conexión](docs/media/streetquest-presentacion.gif)
+
 ## Descargar la aplicación
 
 1. Descarga el ZIP para **Windows x64** desde [la última versión de StreetQuest](https://github.com/AngelmzDev/StreetQuest/releases/latest).
