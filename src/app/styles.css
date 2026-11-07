@@ -1,0 +1,84 @@
+:root {
+  color: #17352d;
+  background: #f3efe4;
+  font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  font-synthesis: none;
+  text-rendering: optimizeLegibility;
+}
+
+* { box-sizing: border-box; }
+
+body { margin: 0; min-width: 320px; min-height: 100vh; }
+button, input { font: inherit; }
+
+.app-shell {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4rem;
+  padding: 2rem;
+  background:
+    radial-gradient(circle at 15% 15%, rgba(233, 181, 73, .22), transparent 35%),
+    linear-gradient(145deg, #f8f5ed 0%, #e5efe7 100%);
+}
+
+.hero { max-width: 46rem; text-align: center; }
+.eyebrow { color: #a24d2d; font-weight: 800; letter-spacing: .08em; text-transform: uppercase; }
+h1 { margin: .15em 0; font-size: clamp(3.5rem, 12vw, 7rem); letter-spacing: -.07em; }
+.hero-copy { max-width: 38rem; margin: 1rem auto 2rem; font-size: clamp(1.05rem, 2vw, 1.35rem); line-height: 1.6; }
+button { border: 0; border-radius: 999px; padding: .9rem 1.4rem; color: white; background: #17352d; font-weight: 800; cursor: pointer; }
+button:hover { background: #245849; }
+.attribution { margin-top: 2rem; font-size: .8rem; opacity: .7; }
+
+.municipality-home { width: min(70rem, 100%); }
+.section-heading { max-width: 45rem; }
+.section-heading h2 { margin: .2rem 0; font-size: clamp(2rem, 5vw, 3.4rem); }
+.search-card, .municipality-card, .candidate-dialog { background: rgba(255,255,255,.82); border: 1px solid rgba(23,53,45,.12); border-radius: 1.4rem; box-shadow: 0 1rem 3rem rgba(23,53,45,.08); }
+.search-card { margin: 1.5rem 0; padding: 1.25rem; }
+.search-card label { display: block; margin-bottom: .55rem; font-weight: 800; }
+.search-row { display: flex; gap: .6rem; }
+.search-row input { flex: 1; min-width: 0; border: 1px solid #aabdb4; border-radius: 999px; padding: .85rem 1rem; color: #17352d; background: white; }
+button:disabled { cursor: not-allowed; opacity: .5; }
+.secondary { color: #17352d; background: #dce9e2; }
+.text-button { color: #8b3925; background: transparent; }
+.offline-note, .error-message { padding: .8rem 1rem; border-radius: .8rem; background: #fff1c8; }
+.error-message { color: #7b281d; background: #ffe3dc; }
+.feedback { min-height: 2.5rem; }
+.candidate-dialog { margin: 1rem 0; padding: 1rem; }
+.candidate { display: flex; width: 100%; flex-direction: column; align-items: flex-start; gap: .25rem; margin-top: .5rem; border-radius: .8rem; text-align: left; }
+.candidate span { font-size: .8rem; opacity: .75; }
+.municipality-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(17rem, 1fr)); gap: 1rem; }
+.municipality-card { padding: 1.25rem; }
+.municipality-card h3 { margin: .25rem 0; font-size: 1.6rem; }
+.card-actions { display: flex; flex-wrap: wrap; gap: .45rem; margin-top: 1rem; }
+.card-actions button { padding: .65rem .85rem; font-size: .85rem; }
+
+@media (max-width: 38rem) {
+  .search-row { flex-direction: column; }
+  .app-shell { padding: 1rem; }
+}
+
+.study-view { min-height: 100vh; display: grid; grid-template-rows: auto auto 1fr auto; color: #17352d; background: #e8eee9; }
+.game-panel { padding: .75rem 1.25rem; background: #f8f5ed; }
+.game-panel p { margin: 0 0 .4rem; }
+.game-panel strong + p { margin-top: .4rem; }
+.game-actions { display: flex; flex-wrap: wrap; gap: .5rem; align-items: center; }
+.game-score { display: flex; flex-wrap: wrap; gap: .4rem .75rem; margin-bottom: .55rem; }
+.game-score span { padding: .25rem .6rem; border-radius: .45rem; background: #e7eee9; font-weight: 700; }
+.map-controls { display: flex; flex-wrap: wrap; align-items: center; gap: .75rem; margin: 0 0 .75rem; padding: .5rem .75rem; border: 1px solid #becbbf; border-radius: .6rem; }
+.map-controls label { display: flex; align-items: center; gap: .35rem; font-size: .85rem; }
+.game-panel strong + .game-actions { margin-top: .6rem; }
+.study-header, .study-footer { display: flex; align-items: center; justify-content: space-between; gap: 1rem; padding: 1rem 1.25rem; background: #f8f5ed; }
+.study-header h1 { margin: 0; font-size: clamp(1.8rem, 5vw, 3rem); letter-spacing: -.04em; }
+.street-picker { display: flex; flex-direction: column; gap: .35rem; font-size: .8rem; font-weight: 800; }
+.street-picker select { max-width: 18rem; padding: .55rem; border: 1px solid #aabdb4; border-radius: .6rem; background: white; }
+.study-map { min-height: 65vh; background: #e7eee9; }
+.study-map.leaflet-container { background: #e7eee9; }
+.study-footer { font-size: .85rem; }
+.study-footer span { opacity: .72; }
+
+@media (max-width: 48rem) {
+  .study-header { align-items: stretch; flex-direction: column; }
+  .study-footer { align-items: flex-start; flex-direction: column; }
+}

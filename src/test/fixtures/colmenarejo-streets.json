@@ -1,0 +1,24 @@
+{
+  "version": 0.6,
+  "generator": "Overpass API (condensed fixture)",
+  "elements": [
+    { "type": "way", "id": 101, "tags": { "highway": "residential", "name": "Calle Madrid" }, "geometry": [
+      { "lat": 40.55, "lon": -4.02 }, { "lat": 40.551, "lon": -4.01 }
+    ] },
+    { "type": "way", "id": 102, "tags": { "highway": "residential", "name": "  CALLE   MADRID " }, "geometry": [
+      { "lat": 40.551, "lon": -4.01 }, { "lat": 40.552, "lon": -4.00 }
+    ] },
+    { "type": "way", "id": 103, "tags": { "highway": "service", "name": "Plaza de la Constitución" }, "geometry": [
+      { "lat": 40.553, "lon": -4.012 }, { "lat": 40.554, "lon": -4.011 }
+    ] },
+    { "type": "way", "id": 104, "tags": { "highway": "footway", "name": "Senda del Arroyo" }, "geometry": [
+      { "lat": 40.54, "lon": -4.02 }, { "lat": 40.541, "lon": -4.019 }
+    ] },
+    { "type": "way", "id": 105, "tags": { "highway": "residential" }, "geometry": [
+      { "lat": 40.54, "lon": -4.01 }, { "lat": 40.541, "lon": -4.009 }
+    ] },
+    { "type": "way", "id": 102, "tags": { "highway": "residential", "name": "Calle Madrid" }, "geometry": [
+      { "lat": 40.551, "lon": -4.01 }, { "lat": 40.552, "lon": -4.00 }
+    ] }
+  ]
+}
