@@ -1,8 +1,9 @@
 import { rankCandidates } from '../../domain/maps/candidates'
 import { assertPackageLimits } from '../../domain/maps/limits'
 import { clipWayToBoundary, groupStreetSegments } from '../../domain/maps/streets'
+import { parseContextGeometry } from '../../domain/maps/contextGeometry'
 import { mapEngineError, type ImportPhase, type MapEngineError, type MunicipalityCandidate, type MunicipalityPackage } from '../../domain/maps/types'
-import { DEFAULT_MAX_RESPONSE_BYTES, DEFAULT_TIMEOUT_MS } from '../../infrastructure/osm/config'
+import { DEFAULT_MAX_RESPONSE_BYTES, DEFAULT_TIMEOUT_MS, OVERPASS_ENDPOINT } from '../../infrastructure/osm/config'
 import { parseMunicipalityBoundary, parseStreetWays } from '../../infrastructure/osm/parsers'
 import { buildBoundaryQuery, buildStreetQuery } from '../../infrastructure/osm/queries'
 import type { MunicipalityStore } from '../../infrastructure/storage/municipalityStore'
@@ -70,7 +71,7 @@ function sourceTimestamp(payload: unknown): string | undefined {
 export function createMunicipalityImporter(dependencies: ImporterDependencies) {
   const now = dependencies.now ?? (() => new Date())
   const delay = dependencies.delay ?? ((milliseconds) => new Promise((resolve) => setTimeout(resolve, milliseconds)))
-  const endpoint = dependencies.overpassEndpoint ?? 'https://overpass-api.de/api/interpreter'
+  const endpoint = dependencies.overpassEndpoint ?? OVERPASS_ENDPOINT
   const throwIfAborted = (signal: AbortSignal) => {
     if (signal.aborted) throw mapEngineError('aborted', 'Importación cancelada')
   }
@@ -134,6 +135,7 @@ export function createMunicipalityImporter(dependencies: ImporterDependencies) {
       municipality: candidate,
       boundary,
       streets,
+      context: parseContextGeometry(streetPayload, boundary),
       source: {
         provider: 'OpenStreetMap',
         overpassEndpoint: endpoint,

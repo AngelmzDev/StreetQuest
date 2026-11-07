@@ -39,6 +39,7 @@ app.whenReady().then(() => {
 
   const window = new BrowserWindow({
     title: 'StreetQuest',
+    icon: resolve(app.getAppPath(), 'desktop', 'assets', 'icon.png'),
     width: 1200,
     height: 800,
     webPreferences: { nodeIntegration: false, contextIsolation: true, sandbox: true },

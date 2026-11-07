@@ -3,6 +3,9 @@ import type { CachedMunicipalitySummary, ImportPhase, MapEngineError, Municipali
 import type { MunicipalityStore } from '../../infrastructure/storage/municipalityStore'
 import type { MunicipalityImporter } from './importMunicipality'
 import { useOnlineStatus } from './useOnlineStatus'
+import { MunicipalityTransferPanel } from './MunicipalityTransferPanel'
+import { exportMunicipality } from './packageTransfer'
+import { NOMINATIM_ENDPOINT, OVERPASS_ENDPOINT } from '../../infrastructure/osm/config'
 
 export interface AppServices {
   store: MunicipalityStore
@@ -69,6 +72,7 @@ function friendlyError(error: unknown): string {
 export function MunicipalityHome({ services, onOpenMunicipality }: MunicipalityHomeProps) {
   const [state, dispatch] = useReducer(reducer, initialState)
   const [query, setQuery] = useState('Colmenarejo')
+  const [importing, setImporting] = useState(false)
   const online = useOnlineStatus()
   const controller = useRef<AbortController | null>(null)
   const pendingSupersedesId = useRef<string | undefined>(undefined)
@@ -184,18 +188,27 @@ export function MunicipalityHome({ services, onOpenMunicipality }: MunicipalityH
           <button type="submit" disabled={!online || busy || !query.trim()}>Buscar municipio</button>
         </div>
       </form>
+      <details className="search-card">
+        <summary>Servicios de mapas y ayuda</summary>
+        <p>Búsqueda: {new URL(NOMINATIM_ENDPOINT).host}. Geometrías: {new URL(OVERPASS_ENDPOINT).host}.</p>
+        <p>Si el servidor público está ocupado, espera antes de reintentar. Puedes abrir Colmenarejo o importar un paquete local mientras tanto.</p>
+      </details>
+      <MunicipalityTransferPanel store={services.store} disabled={busy} onSaved={reloadCatalog} onBusy={(active) => {
+        setImporting(active)
+        dispatch({ type: 'active', active })
+      }} />
 
       <div className="feedback" aria-live="polite">
         {state.status && <p>{state.status}</p>}
         {state.error && <p className="error-message">{state.error}</p>}
-        {busy && <button type="button" className="secondary" onClick={() => controller.current?.abort()}>Cancelar</button>}
+        {busy && !importing && <button type="button" className="secondary" onClick={() => controller.current?.abort()}>Cancelar</button>}
       </div>
 
       {state.candidates.length > 0 && (
         <div role="dialog" aria-label="Elige el municipio" className="candidate-dialog">
           <h3>Elige el municipio correcto</h3>
           {state.candidates.map((candidate) => (
-            <button key={candidate.osmId} type="button" className="candidate" onClick={() => void downloadCandidate(candidate)}>
+            <button key={candidate.osmId} type="button" className="candidate" disabled={busy} onClick={() => void downloadCandidate(candidate)}>
               <strong>{candidate.displayName}</strong>
               <span>{candidate.confidenceReason}</span>
             </button>
@@ -210,9 +223,12 @@ export function MunicipalityHome({ services, onOpenMunicipality }: MunicipalityH
             <h3>{summary.name}</h3>
             <p>{summary.streetCount.toLocaleString('es-ES')} calles · guardado {new Date(summary.fetchedAt).toLocaleDateString('es-ES')}</p>
             <div className="card-actions">
-              <button type="button" onClick={() => onOpenMunicipality(summary.id)}>Abrir {summary.name}</button>
+              <button type="button" disabled={busy} onClick={() => onOpenMunicipality(summary.id)}>Abrir {summary.name}</button>
               <button type="button" className="secondary" disabled={!online || busy} onClick={() => void refresh(summary)}>Actualizar {summary.name}</button>
-              <button type="button" className="text-button" onClick={() => void remove(summary)}>Eliminar {summary.name}</button>
+              <button type="button" className="text-button" disabled={busy} onClick={() => void remove(summary)}>Eliminar {summary.name}</button>
+              <button type="button" className="secondary" disabled={busy} onClick={() => {
+                void exportMunicipality(services.store, summary.id).catch((error) => dispatch({ type: 'error', error: friendlyError(error) }))
+              }}>Exportar {summary.name}</button>
             </div>
           </article>
         ))}

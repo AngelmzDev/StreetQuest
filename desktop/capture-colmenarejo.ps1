@@ -49,9 +49,20 @@ $streets = @(foreach ($way in ($ways.Values | Sort-Object id)) {
   }
 })
 if ($streets.Count -lt 20) { throw 'Unexpectedly few street ways' }
+$context = @(foreach ($way in ($ways.Values | Sort-Object id)) {
+  $tags = $way.tags
+  if ($tags.building -or $tags.natural -in @('water','wood','scrub','grassland') -or
+      $tags.landuse -in @('forest','grass','meadow','village_green') -or
+      $tags.leisure -in @('park','garden','recreation_ground') -or $tags.waterway -eq 'riverbank') {
+    if ($way.nodes.Count -ge 4 -and $way.nodes[0] -eq $way.nodes[-1]) {
+      @{ type = 'way'; id = $way.id; tags = $tags; geometry = @(Get-Geometry $way) }
+    }
+  }
+})
 @{
   capturedAt = [DateTime]::UtcNow.ToString('o')
   boundary = @{ elements = @(@{ type = 'relation'; id = $relationId; members = $members; tags = $relation.tags }) }
   streets = @{ elements = $streets }
+  context = @{ elements = $context }
 } | ConvertTo-Json -Depth 12 -Compress | Set-Content -LiteralPath (Join-Path $PSScriptRoot '../public/colmenarejo-osm.json') -Encoding utf8NoBOM
 Write-Output "Captured $($streets.Count) OSM ways"

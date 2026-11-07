@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { lazy, Suspense, useState } from 'react'
 import './styles.css'
 import type { MunicipalityPackage } from '../domain/maps/types'
 import { createMunicipalityImporter } from '../features/municipalities/importMunicipality'
@@ -7,7 +7,7 @@ import { MunicipalityHome, type AppServices } from '../features/municipalities/M
 import { createNominatimClient } from '../infrastructure/osm/nominatimClient'
 import { createOverpassClient } from '../infrastructure/osm/overpassClient'
 import { createMunicipalityStore } from '../infrastructure/storage/municipalityStore'
-import { StudyMap } from '../features/study-map/StudyMap'
+const StudyMap = lazy(() => import('../features/study-map/StudyMap').then((module) => ({ default: module.StudyMap })))
 
 const store = createMunicipalityStore()
 const defaultServices: AppServices = {
@@ -36,7 +36,7 @@ export function App({ services = defaultServices }: { services?: AppServices }) 
     }
   }
 
-  if (selected) return <StudyMap municipality={selected} onBack={() => setSelected(null)} />
+  if (selected) return <Suspense fallback={<p role="status">Preparando el mapa…</p>}><StudyMap municipality={selected} onBack={() => setSelected(null)} /></Suspense>
 
   return (
     <main className="app-shell">

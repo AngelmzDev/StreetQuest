@@ -1,4 +1,4 @@
-# Arquitectura de StreetQuest — fase 1
+# Arquitectura de StreetQuest — versión 1.0
 
 ## Flujo de datos
 
@@ -14,7 +14,7 @@ Formulario de municipio
   → Leaflet Canvas sin TileLayer
 ```
 
-El Service Worker conserva únicamente el shell de la aplicación. Las respuestas externas no entran en la caché HTTP del worker; los paquetes normalizados viven en IndexedDB.
+El Service Worker conserva el shell y el extracto incluido de Colmenarejo. Las respuestas externas no entran en la caché HTTP del worker. Los paquetes normalizados viven en IndexedDB. Electron sirve los archivos incluidos mediante el protocolo seguro local streetquest://bundle y conserva el mismo origen entre versiones.
 
 ## Límites de los módulos
 
@@ -29,7 +29,7 @@ El Service Worker conserva únicamente el shell de la aplicación. Las respuesta
 
 ### Límites municipales
 
-`admin_level=8` mejora la puntuación en España, pero no es un filtro obligatorio. Los empates requieren selección humana. Se conservan polígonos separados y anillos interiores; las geometrías vacías, abiertas, no finitas o implausibles se rechazan.
+La búsqueda se limita a España y la importación exige una relación administrativa de nivel 8. Los empates y candidatos débiles requieren selección humana. Se conservan polígonos separados y anillos interiores. Se rechazan miembros incompletos, geometrías vacías, no finitas o implausibles y reconstrucciones que pierdan miembros.
 
 ### Calles
 
@@ -42,3 +42,25 @@ Los transportes distinguen cancelación, timeout, red, rate limit, JSON inválid
 ## Pruebas
 
 La suite usa fixtures locales y `fake-indexeddb`; no depende de Nominatim u Overpass activos. Playwright construye el PWA, carga y siembra IndexedDB, desconecta el contexto del navegador, recarga y abre Colmenarejo para demostrar el recorrido offline completo.
+
+## Contexto visual y compatibilidad
+
+Los paquetes v1 admiten un campo opcional context con polígonos de edificios, zonas verdes y agua. Los paquetes anteriores siguen siendo legibles. Las geometrías se recortan al límite municipal. Las que no pueden tocar el límite se clasifican directamente y las restantes pasan por una intersección poligonal.
+
+Leaflet dibuja el contexto antes de las calles. Las capas de contexto no son interactivas y carecen de nombres. La vista Estudio oculta estas capas. La jerarquía de calles se representa con estilos diferentes.
+
+## Juegos y aprendizaje
+
+streetGame.ts gestiona las rondas, rachas y errores. learningProgress.ts registra intentos y aciertos por municipio, modo y calle. Los récords y el historial viven en localStorage bajo claves separadas por tipo de sesión. El modo continuo presenta calles sin repetir hasta fallar o agotar el municipio.
+
+El repaso prioriza calles practicadas con menos de tres aciertos consecutivos, después calles nuevas y finalmente dominadas. En cada grupo se utiliza la antigüedad del último intento. Los respaldos validan municipio, versión y valores antes de sustituir los datos. Se conservan los identificadores de calle existentes.
+
+## Transferencia de datos
+
+packageTransfer.ts valida identidad OSM, límites, geometrías, calles, contexto y metadatos antes de escribir paquetes importados. Los archivos están limitados a 128 MiB. La escritura utiliza la misma transacción atómica que una descarga.
+
+Las copias de progreso se limitan a 16 MiB y requieren confirmación antes de restaurarse. Los errores de almacenamiento se comunican en la interfaz.
+
+## Publicación
+
+La compilación de Windows crea una carpeta portable con Electron, la aplicación, el mapa incluido y las licencias. GitHub Actions comprueba tipos, lint, pruebas unitarias y los recorridos offline del ejecutable. Los tags v* publican el ZIP verificado y SHA256SUMS.txt tras superar esos controles.

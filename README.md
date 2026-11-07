@@ -13,12 +13,14 @@ StreetQuest muestra calles vectoriales sin etiquetas permanentes. Explora el map
 
 ## Descargar y abrir en Windows
 
-Si hay un paquete portable publicado en [GitHub Releases](https://github.com/AngelmzDev/StreetQuest/releases), descarga el ZIP para Windows x64, extráelo y abre **StreetQuest.exe**. Conserva la carpeta extraída completa junto al ejecutable. El programa guarda los mapas en el perfil local de Windows.
+Descarga el ZIP para Windows x64 desde [GitHub Releases](https://github.com/AngelmzDev/StreetQuest/releases/latest), extráelo y abre **StreetQuest.exe**. Conserva la carpeta extraída completa junto al ejecutable. El programa guarda los mapas en el perfil local de Windows. El paquete portable incluye todos los recursos y no requiere instalar Node.js. La distribución actual no lleva certificado de firma de código.
 
-Puedes generar el paquete desde el código si aún no hay un ZIP publicado. Necesitas Windows, Git, Node.js 22 o posterior y pnpm 11.
+Cada publicación incluye `SHA256SUMS.txt` para comprobar el archivo descargado y sus notas de cambios.
+
+Para generar el paquete desde el código necesitas Windows, Git, Node.js 22.12 o posterior y pnpm 11. Las comprobaciones de publicación usan Node.js 24.
 
 ```powershell
-git clone --branch feat/phase-1-map-engine https://github.com/AngelmzDev/StreetQuest.git
+git clone https://github.com/AngelmzDev/StreetQuest.git
 cd StreetQuest
 pnpm install --frozen-lockfile
 pnpm build:windows
@@ -33,9 +35,19 @@ La última orden muestra la ruta del ejecutable en `release/`. La instalación d
 3. **Descarga otro municipio.** Con Internet, escribe el nombre y pulsa «Buscar municipio». Si aparecen varias coincidencias, elige la correcta. Cuando termine la descarga, abre su tarjeta.
 4. **Gestiona las copias.** Desde el catálogo puedes abrir, actualizar o eliminar un mapa. Una actualización fallida conserva la copia anterior.
 
+5. **Cambia la vista.** «Mapa detallado» muestra edificios, vegetación y agua. Activa o desactiva las capas que quieras. «Estudio» presenta el plano simplificado. Ambas vistas funcionan sin teselas y sin nombres que desvelen respuestas.
+6. **Comparte mapas.** Exporta un municipio desde su tarjeta. Para abrirlo en otro equipo, importa el JSON desde «Abrir un paquete municipal». La aplicación valida el contenido y pide confirmación si ya hay una copia.
+7. **Respalda el aprendizaje.** En el mapa, despliega «Copias de seguridad del progreso». Exporta el historial y los récords o restaura una copia correspondiente al mismo municipio.
+
 Desde el mapa puedes elegir **Adivina la calle** para identificar el tramo resaltado entre varias opciones o **Localiza la calle** para pulsar en el mapa el nombre que te pide el juego. Cada partida presenta hasta diez calles distintas, muestra la respuesta después de cada intento y calcula los aciertos al final. Los dos modos funcionan sin conexión con Colmenarejo o con cualquier mapa guardado que tenga suficientes calles.
 
 El marcador suma un punto por acierto. Un fallo o salto reinicia la racha actual. El récord de aciertos seguidos se guarda en el equipo por municipio y modo de juego.
+
+Activa «Racha continua hasta fallar» para intentar superar diez aciertos. Las calles se presentan sin repetir hasta el primer error o salto, o hasta agotar el mapa. Sus récords se guardan separados de los de las rondas cortas. Al terminar puedes consultar los errores y practicarlos de nuevo.
+
+![Vista real del mapa detallado de Colmenarejo](docs/media/app-detailed.png)
+
+![Vista real de un juego de StreetQuest](docs/media/app-game.png)
 
 **Repaso inteligente.** «Tu progreso» muestra las calles practicadas, los aciertos y las calles dominadas para nombres y ubicaciones por separado. «Repasar nombres» y «Repasar ubicaciones» presentan primero las calles practicadas que aún no dominas, después las nuevas y finalmente las dominadas, empezando por las que llevas más tiempo sin ver. Tres aciertos seguidos en una misma calle la marcan como dominada. Un error o salto reinicia esa cuenta para la calle. El historial se guarda al responder y se conserva al cerrar la aplicación, sin conexión.
 

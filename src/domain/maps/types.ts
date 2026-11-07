@@ -73,6 +73,13 @@ export interface MunicipalityPackage {
   boundary: MunicipalityBoundary
   streets: Street[]
   source: SourceMetadata
+  context?: ContextFeature[]
+}
+
+export interface ContextFeature {
+  id: string
+  kind: 'building' | 'green' | 'water'
+  geometry: BoundaryGeometry
 }
 
 export interface CachedMunicipalitySummary {

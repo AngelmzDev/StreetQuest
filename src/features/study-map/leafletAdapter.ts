@@ -1,5 +1,5 @@
 import * as Leaflet from 'leaflet'
-import type { MunicipalityPackage } from '../../domain/maps/types'
+import type { ContextFeature, MunicipalityPackage } from '../../domain/maps/types'
 
 interface MapLike {
   fitBounds(bounds: [[number, number], [number, number]], options?: Record<string, unknown>): void
@@ -31,12 +31,19 @@ const leafletFacade: LeafletFacade = {
 
 const normalStreetStyle = { color: '#52796f', weight: 2, opacity: 0.82 }
 const selectedStreetStyle = { color: '#d05a32', weight: 6, opacity: 1 }
+function streetStyle(highway: unknown) {
+  if (typeof highway === 'string' && /^(motorway|trunk|primary|secondary)/.test(highway)) {
+    return { color: '#a87540', weight: 4, opacity: 0.9 }
+  }
+  return normalStreetStyle
+}
 
 export function createStudyMap(
   container: HTMLElement,
   pkg: MunicipalityPackage,
   leaflet: LeafletFacade = leafletFacade,
   onStreetSelected?: (streetId: string, name: string) => void,
+  contextKinds: ContextFeature['kind'][] = [],
 ): { destroy(): void; selectStreet(id: string): void; focusStreet(id: string): void; resetView(): void } {
   const renderer = leaflet.canvas({ padding: 0.35, tolerance: 6 })
   const map = leaflet.map(container, {
@@ -55,14 +62,27 @@ export function createStudyMap(
     style: { color: '#17352d', weight: 3, fillColor: '#e7eee9', fillOpacity: 0.55 },
   }).addTo(map)
 
+  const context = (pkg.context ?? []).filter((item) => contextKinds.includes(item.kind))
+  const colors = { building: '#bdab97', green: '#a1c49b', water: '#8cbdcf' }
+  for (const kind of ['green', 'water', 'building'] as const) {
+    const features = context.filter((item) => item.kind === kind).map((item) => ({
+      type: 'Feature', properties: { kind }, geometry: item.geometry,
+    }))
+    if (features.length) leaflet.geoJSON({ type: 'FeatureCollection', features }, {
+      renderer,
+      interactive: false,
+      style: { color: kind === 'building' ? '#897664' : colors[kind], weight: 0.7, fillColor: colors[kind], fillOpacity: 0.75 },
+    }).addTo(map)
+  }
+
   const streetFeatures = pkg.streets.flatMap((street) => street.segments.map((segment) => ({
     type: 'Feature',
-    properties: { streetId: street.id, name: street.name, segmentId: segment.id },
+    properties: { streetId: street.id, name: street.name, segmentId: segment.id, highway: segment.highway },
     geometry: { type: 'LineString', coordinates: segment.coordinates },
   })))
   const streetLayer = leaflet.geoJSON({ type: 'FeatureCollection', features: streetFeatures }, {
     renderer,
-    style: normalStreetStyle,
+    style: (feature: { properties?: Record<string, unknown> }) => streetStyle(feature.properties?.highway),
     onEachFeature: (feature: { properties?: Record<string, unknown> }, layer: FeatureLayerLike) => {
       layer.on({
         click: () => {
@@ -82,7 +102,7 @@ export function createStudyMap(
 
   function selectStreet(id: string) {
     streetLayer.eachLayer((layer) => {
-      layer.setStyle(layer.feature?.properties?.streetId === id ? selectedStreetStyle : normalStreetStyle)
+      layer.setStyle(layer.feature?.properties?.streetId === id ? selectedStreetStyle : streetStyle(layer.feature?.properties?.highway))
     })
   }
 

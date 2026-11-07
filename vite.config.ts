@@ -19,6 +19,7 @@ export default defineConfig({
         icons: [{ src: '/icon.svg', sizes: 'any', type: 'image/svg+xml', purpose: 'any maskable' }],
       },
       workbox: {
+        maximumFileSizeToCacheInBytes: 16 * 1024 * 1024,
         globPatterns: ['**/*.{js,css,html,svg,webmanifest}', 'colmenarejo-osm.json'],
         navigateFallback: 'index.html',
         runtimeCaching: [],

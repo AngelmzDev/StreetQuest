@@ -14,7 +14,7 @@ function storageKey(municipalityId: string, mode: GameMode): string {
   return `streetquest:learning:v1:${municipalityId}:${mode}`
 }
 
-function validEntry(value: unknown): value is StreetProgress {
+export function validEntry(value: unknown): value is StreetProgress {
   if (typeof value !== 'object' || value === null) return false
   const entry = value as StreetProgress
   return [entry.attempts, entry.correct, entry.consecutive, entry.lastSeen]

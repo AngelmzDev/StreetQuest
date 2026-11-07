@@ -17,6 +17,9 @@ export interface StreetGame {
   answered: boolean
   lastCorrect: boolean
   review: boolean
+  continuous: boolean
+  attempts: number
+  mistakes: Street[]
 }
 
 function shuffled<T>(items: T[]): T[] {
@@ -28,14 +31,14 @@ function shuffled<T>(items: T[]): T[] {
   return result
 }
 
-export function startGame(mode: GameMode, streets: Street[], record = 0, reviewQueue?: Street[]): StreetGame {
-  const questions = (reviewQueue ?? shuffled(streets)).slice(0, 10).map((street) => ({
+export function startGame(mode: GameMode, streets: Street[], record = 0, reviewQueue?: Street[], continuous = false): StreetGame {
+  const questions = (reviewQueue ?? shuffled(streets)).slice(0, continuous ? streets.length : 10).map((street) => ({
     street,
     options: mode === 'guess'
       ? shuffled([street, ...shuffled(streets.filter((item) => item.id !== street.id)).slice(0, 3)])
       : [],
   }))
-  return { mode, questions, index: 0, correct: 0, streak: 0, record, answered: false, lastCorrect: false, review: reviewQueue !== undefined }
+  return { mode, questions, index: 0, correct: 0, streak: 0, record, answered: false, lastCorrect: false, review: reviewQueue !== undefined, continuous, attempts: 0, mistakes: [] }
 }
 
 export function answerGame(game: StreetGame, id?: string): StreetGame {
@@ -50,28 +53,31 @@ export function answerGame(game: StreetGame, id?: string): StreetGame {
     correct: game.correct + Number(lastCorrect),
     streak,
     record: Math.max(game.record, streak),
+    attempts: game.attempts + 1,
+    mistakes: lastCorrect ? game.mistakes : [...game.mistakes, question.street],
   }
 }
 
-function recordKey(municipalityId: string, mode: GameMode): string {
-  return `streetquest:streak:${municipalityId}:${mode}`
+function recordKey(municipalityId: string, mode: GameMode, continuous: boolean): string {
+  return `streetquest:streak:${municipalityId}:${mode}${continuous ? ':continuous' : ''}`
 }
 
-export function readStreakRecord(municipalityId: string, mode: GameMode): number {
+export function readStreakRecord(municipalityId: string, mode: GameMode, continuous = false): number {
   try {
-    const value = Number(localStorage.getItem(recordKey(municipalityId, mode)))
+    const value = Number(localStorage.getItem(recordKey(municipalityId, mode, continuous)))
     return Number.isSafeInteger(value) && value > 0 ? value : 0
   } catch {
     return 0
   }
 }
 
-export function saveStreakRecord(municipalityId: string, mode: GameMode, record: number): void {
+export function saveStreakRecord(municipalityId: string, mode: GameMode, record: number, continuous = false): boolean {
   try {
-    if (record > readStreakRecord(municipalityId, mode)) {
-      localStorage.setItem(recordKey(municipalityId, mode), String(record))
+    if (record > readStreakRecord(municipalityId, mode, continuous)) {
+      localStorage.setItem(recordKey(municipalityId, mode, continuous), String(record))
     }
+    return true
   } catch {
-    // El marcador sigue funcionando aunque el almacenamiento esté bloqueado.
+    return false
   }
 }

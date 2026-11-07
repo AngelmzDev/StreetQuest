@@ -16,5 +16,6 @@ export function buildStreetQuery(input: { relationId: number; bbox: BBox; mode: 
     return `[out:json][timeout:60];relation(${input.relationId})->.municipality;.municipality map_to_area->.searchArea;way(area.searchArea)${selector};out body geom;`
   }
   const [west, south, east, north] = input.bbox
-  return `[out:json][timeout:60];way${selector}(${south},${west},${north},${east});out body geom;`
+  const box = `(${south},${west},${north},${east})`
+  return `[out:json][timeout:60];(way${selector}${box};way["building"]${box};way["landuse"~"^(forest|grass|meadow|village_green)$"]${box};way["natural"~"^(water|wood|scrub|grassland)$"]${box};way["leisure"~"^(park|garden|recreation_ground)$"]${box};);out body geom;`
 }

@@ -43,6 +43,18 @@ function fakeLeaflet() {
 }
 
 describe('createStudyMap', () => {
+  it('renders selected context layers without names or clickable answers', () => {
+    const fake = fakeLeaflet()
+    const pkg = packageFixture()
+    pkg.context = [
+      { id: 'building', kind: 'building', geometry: pkg.boundary.geometry },
+      { id: 'park', kind: 'green', geometry: pkg.boundary.geometry },
+    ]
+    createStudyMap(document.createElement('div'), pkg, fake.facade, undefined, ['building'])
+    const context = fake.geoJsonCalls[1] as { features: Array<{ properties: unknown }> }
+    expect(context.features).toHaveLength(1)
+    expect(context.features[0]?.properties).toEqual({ kind: 'building' })
+  })
   it('uses Canvas, fits the validated boundary, and never requests tiles', () => {
     const fake = fakeLeaflet()
     const fetchSpy = vi.spyOn(globalThis, 'fetch')
