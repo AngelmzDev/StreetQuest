@@ -29,4 +29,12 @@ describe('municipality file validation', () => {
     broken.streets[0]!.segments[0]!.coordinates[0] = [999, 0]
     expect(() => parseMunicipalityPackage(broken)).toThrow()
   })
+  it('rejects street IDs that cannot safely round trip through progress backups', async () => {
+    const pkg = await fixture()
+    for (const id of ['custom-street', '__proto__', 'constructor']) {
+      const invalid = structuredClone(pkg)
+      invalid.streets[0]!.id = id
+      expect(() => parseMunicipalityPackage(invalid)).toThrow()
+    }
+  })
 })

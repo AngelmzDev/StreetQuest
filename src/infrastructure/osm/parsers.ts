@@ -103,12 +103,20 @@ export function parseStreetWays(payload: unknown): SourceStreetWay[] {
   }
   const unique = new Map<number, SourceStreetWay>()
   for (const element of payload.elements as OverpassWay[]) {
+    if (typeof element !== 'object' || element === null) throw mapEngineError('invalid-response', 'La respuesta contiene un elemento OSM no válido')
     const id = element.id
-    const name = element.tags?.name?.trim()
+    const name = typeof element.tags?.name === 'string' ? element.tags.name.trim() : undefined
     const highway = element.tags?.highway
-    if (element.type !== 'way' || typeof id !== 'number' || unique.has(id) || !name || !highway || !STUDY_HIGHWAYS.has(highway)) continue
-    const coordinates = element.geometry?.map(({ lon, lat }) => [lon, lat] as Position) ?? []
-    if (coordinates.length < 2 || coordinates.some(([lon, lat]) => !Number.isFinite(lon) || !Number.isFinite(lat) || lon < -180 || lon > 180 || lat < -90 || lat > 90)) continue
+    if (element.type !== 'way' || !name || !highway || !STUDY_HIGHWAYS.has(highway)) continue
+    if (typeof id !== 'number' || !Number.isSafeInteger(id) || id <= 0) throw mapEngineError('invalid-response', 'La respuesta contiene una calle sin identificador válido')
+    if (unique.has(id)) continue
+    if (!Array.isArray(element.geometry) || element.geometry.length < 2 || element.geometry.some((coordinate) =>
+      !coordinate || typeof coordinate.lon !== 'number' || typeof coordinate.lat !== 'number'
+      || !Number.isFinite(coordinate.lon) || !Number.isFinite(coordinate.lat)
+      || Math.abs(coordinate.lon) > 180 || Math.abs(coordinate.lat) > 90)) {
+      throw mapEngineError('invalid-response', 'La respuesta contiene una calle con geometría incompleta o no válida')
+    }
+    const coordinates = element.geometry.map(({ lon, lat }) => [lon, lat] as Position)
     unique.set(id, { sourceWayId: id, name, highway, coordinates })
   }
   return [...unique.values()].sort((a, b) => a.sourceWayId - b.sourceWayId)

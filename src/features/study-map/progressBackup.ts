@@ -1,5 +1,6 @@
 import { readProgress, validEntry } from './learningProgress'
 import { readStreakRecord } from './streetGame'
+import { isStreetId } from '../../domain/maps/streetIdentity'
 
 export function createProgressBackup(municipalityId: string) {
   return {
@@ -26,7 +27,7 @@ export function validateProgressBackup(value: unknown, municipalityId: string): 
   for (const entries of [backup.guess, backup.locate]) {
     if (typeof entries !== 'object' || entries === null || Array.isArray(entries)
       || Object.keys(entries).length > 250_000
-      || !Object.entries(entries).every(([id, entry]) => /^street-[a-z0-9]+$/i.test(id) && validEntry(entry))) {
+      || !Object.entries(entries).every(([id, entry]) => isStreetId(id) && validEntry(entry))) {
       throw new Error('El historial de calles no es válido.')
     }
   }

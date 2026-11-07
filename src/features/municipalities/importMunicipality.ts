@@ -7,6 +7,7 @@ import { DEFAULT_MAX_RESPONSE_BYTES, DEFAULT_TIMEOUT_MS, OVERPASS_ENDPOINT } fro
 import { parseMunicipalityBoundary, parseStreetWays } from '../../infrastructure/osm/parsers'
 import { buildBoundaryQuery, buildStreetQuery } from '../../infrastructure/osm/queries'
 import type { MunicipalityStore } from '../../infrastructure/storage/municipalityStore'
+import { stageLearningMigration } from '../study-map/migrateLearning'
 
 export interface NominatimGateway {
   searchMunicipalities(query: string, options: { countryCode: 'es'; signal: AbortSignal }): Promise<MunicipalityCandidate[]>
@@ -150,7 +151,21 @@ export function createMunicipalityImporter(dependencies: ImporterDependencies) {
     options.onProgress('saving-locally')
     throwIfAborted(options.signal)
     if (options.supersedesId && options.supersedesId !== pkg.id) {
-      await dependencies.store.replaceAndRemoveAtomically(pkg, options.supersedesId)
+      const previous = await dependencies.store.get(options.supersedesId)
+      throwIfAborted(options.signal)
+      let rollback: (() => void) | undefined
+      try {
+        rollback = previous ? stageLearningMigration(previous, pkg) : undefined
+      } catch (error) {
+        const quota = error instanceof DOMException && error.name === 'QuotaExceededError'
+        throw mapEngineError(quota ? 'storage-quota' : 'storage', 'No se pudo conservar el progreso. La copia anterior sigue disponible.', false, error)
+      }
+      try {
+        await dependencies.store.replaceAndRemoveAtomically(pkg, options.supersedesId)
+      } catch (error) {
+        try { rollback?.() } catch { /* The old package and its original history remain available. */ }
+        throw error
+      }
     } else {
       await dependencies.store.replaceAtomically(pkg)
     }

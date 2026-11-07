@@ -65,12 +65,20 @@ describe('parseMunicipalityBoundary', () => {
 })
 
 describe('parseStreetWays', () => {
-  it('keeps unique named study streets and skips excluded or invalid ways', () => {
+  it('keeps unique named study streets and skips excluded ways', () => {
     const parsed = parseStreetWays(streets)
 
     expect(parsed).toHaveLength(3)
     expect(parsed.map((way) => way.sourceWayId)).toEqual([101, 102, 103])
     expect(parsed.some((way) => way.highway === 'footway')).toBe(false)
+  })
+
+  it('rejects out-of-range geometry on an eligible named street', () => {
+    expect(() => parseStreetWays({ elements: [
+      { type: 'way', id: 106, tags: { highway: 'residential', name: 'Calle Rota' }, geometry: [
+        { lat: 91, lon: -4.01 }, { lat: 40.55, lon: -4 },
+      ] },
+    ] })).toThrowError(expect.objectContaining({ kind: 'invalid-response' }))
   })
 
   it('rejects a marked partial Overpass response defensively', () => {

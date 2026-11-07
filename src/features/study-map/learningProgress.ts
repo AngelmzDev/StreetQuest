@@ -1,5 +1,6 @@
 import type { Street } from '../../domain/maps/types'
 import type { GameMode } from './streetGame'
+import { isStreetId } from '../../domain/maps/streetIdentity'
 
 interface StreetProgress {
   attempts: number
@@ -9,6 +10,10 @@ interface StreetProgress {
 }
 
 export type LearningProgress = Record<string, StreetProgress>
+
+function entryFor(progress: LearningProgress, id: string) {
+  return Object.hasOwn(progress, id) ? progress[id] : undefined
+}
 
 function storageKey(municipalityId: string, mode: GameMode): string {
   return `streetquest:learning:v1:${municipalityId}:${mode}`
@@ -26,15 +31,16 @@ export function readProgress(municipalityId: string, mode: GameMode): LearningPr
   try {
     const stored: unknown = JSON.parse(localStorage.getItem(storageKey(municipalityId, mode)) ?? '{}')
     if (typeof stored !== 'object' || stored === null || Array.isArray(stored)) return {}
-    return Object.fromEntries(Object.entries(stored).filter(([, value]) => validEntry(value)))
+    return Object.fromEntries(Object.entries(stored).filter(([id, value]) => isStreetId(id) && validEntry(value)))
   } catch {
     return {}
   }
 }
 
 export function recordAttempt(municipalityId: string, mode: GameMode, streetId: string, correct: boolean): boolean {
+  if (!isStreetId(streetId)) return false
   const progress = readProgress(municipalityId, mode)
-  const previous = progress[streetId]
+  const previous = entryFor(progress, streetId)
   progress[streetId] = {
     attempts: (previous?.attempts ?? 0) + 1,
     correct: (previous?.correct ?? 0) + Number(correct),
@@ -51,18 +57,18 @@ export function recordAttempt(municipalityId: string, mode: GameMode, streetId: 
 
 export function reviewStreets(streets: Street[], progress: LearningProgress): Street[] {
   const priority = (id: string) => {
-    const entry = progress[id]
+    const entry = entryFor(progress, id)
     if (!entry) return 1
     return entry.consecutive < 3 ? 0 : 2
   }
   return [...streets].sort((left, right) =>
     priority(left.id) - priority(right.id)
-    || (progress[left.id]?.lastSeen ?? 0) - (progress[right.id]?.lastSeen ?? 0)
+    || (entryFor(progress, left.id)?.lastSeen ?? 0) - (entryFor(progress, right.id)?.lastSeen ?? 0)
     || left.name.localeCompare(right.name, 'es'))
 }
 
 export function summarizeProgress(streets: Street[], progress: LearningProgress) {
-  const entries = streets.map((street) => progress[street.id]).filter((entry) => entry !== undefined)
+  const entries = streets.map((street) => entryFor(progress, street.id)).filter((entry) => entry !== undefined)
   return {
     studied: entries.length,
     mastered: entries.filter((entry) => entry.consecutive >= 3).length,

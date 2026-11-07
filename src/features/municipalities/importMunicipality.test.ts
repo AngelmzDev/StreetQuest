@@ -4,6 +4,8 @@ import streetsFixture from '../../test/fixtures/colmenarejo-streets.json'
 import { mapEngineError, type MunicipalityCandidate, type MunicipalityPackage } from '../../domain/maps/types'
 import type { MunicipalityStore } from '../../infrastructure/storage/municipalityStore'
 import { createMunicipalityImporter } from './importMunicipality'
+import { readProgress, recordAttempt } from '../study-map/learningProgress'
+import { readStreakRecord, saveStreakRecord } from '../study-map/streetGame'
 
 function candidate(overrides: Partial<MunicipalityCandidate> = {}): MunicipalityCandidate {
   return {
@@ -144,6 +146,53 @@ describe('importMunicipality', () => {
 })
 
 describe('refreshMunicipality', () => {
+  it('preserves a working package when a named street response is incomplete', async () => {
+    const overpass = { executeOverpass: vi.fn()
+      .mockResolvedValueOnce(boundaryFixture).mockResolvedValueOnce(streetsFixture)
+      .mockResolvedValueOnce(boundaryFixture).mockResolvedValueOnce({ elements: [
+        { type: 'way', id: 101, tags: { highway: 'residential', name: 'Calle Madrid' } },
+      ] }) }
+    const { api, packages } = importer({ overpass })
+    const existing = await api.importMunicipality(candidate(), { signal: new AbortController().signal, onProgress: () => undefined })
+    await expect(api.refreshMunicipality(existing, { signal: new AbortController().signal, onProgress: () => undefined }))
+      .rejects.toMatchObject({ kind: 'invalid-response' })
+    expect(packages.get(existing.id)).toEqual(existing)
+  })
+
+  it.each([false, true, 'database'] as const)('migrates learning on replacement and keeps the old map if storage fails (%s)', async (failStorage) => {
+    localStorage.clear()
+    const overpass = { executeOverpass: vi.fn()
+      .mockResolvedValueOnce(boundaryFixture).mockResolvedValueOnce(streetsFixture)
+      .mockResolvedValueOnce({ elements: [] }).mockResolvedValueOnce(boundaryFor(999)).mockResolvedValueOnce(streetsFixture) }
+    const nominatim = { searchMunicipalities: vi.fn(async () => [candidate({ osmId: 999 })]) }
+    const { api, packages, store } = importer({ overpass, nominatim })
+    const existing = await api.importMunicipality(candidate(), { signal: new AbortController().signal, onProgress: () => undefined })
+    const oldStreet = existing.streets[0]!
+    recordAttempt(existing.id, 'guess', oldStreet.id, true)
+    saveStreakRecord(existing.id, 'guess', 4)
+    saveStreakRecord(existing.id, 'locate', 3, true)
+    const spy = failStorage === true ? vi.spyOn(Storage.prototype, 'setItem').mockImplementationOnce(() => { throw new DOMException('full', 'QuotaExceededError') }) : undefined
+    if (failStorage === 'database') vi.mocked(store.replaceAndRemoveAtomically).mockRejectedValueOnce(new Error('database failure'))
+    try {
+      const refresh = api.refreshMunicipality(existing, { signal: new AbortController().signal, onProgress: () => undefined })
+      if (failStorage) {
+        await expect(refresh).rejects.toBeDefined()
+        expect(packages.get(existing.id)).toEqual(existing)
+        expect(packages.has('relation-999')).toBe(false)
+        expect(readProgress('relation-999', 'guess')).toEqual({})
+      } else {
+        const replacement = await refresh
+        const newStreet = replacement.streets.find((street) => street.normalizedName === oldStreet.normalizedName)!
+        expect(readProgress(replacement.id, 'guess')[newStreet.id]?.attempts).toBe(1)
+        expect(readStreakRecord(replacement.id, 'guess')).toBe(4)
+        expect(readStreakRecord(replacement.id, 'locate', true)).toBe(3)
+        expect(packages.has(existing.id)).toBe(false)
+      }
+    } finally {
+      spy?.mockRestore()
+      localStorage.clear()
+    }
+  })
   it('reuses the cached relation and preserves the prior cache on failure', async () => {
     const existing = await importer().api.importMunicipality(candidate(), { signal: new AbortController().signal, onProgress: () => undefined })
     const overpass = { executeOverpass: vi.fn().mockRejectedValue(mapEngineError('network', 'offline', false)) }

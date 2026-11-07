@@ -54,4 +54,5 @@ jobs:
           GH_TOKEN: ${{ github.token }}
         shell: pwsh
         run: |
-          gh release create $env:GITHUB_REF_NAME StreetQuest-*-win-x64.zip SHA256SUMS.txt --repo $env:GITHUB_REPOSITORY --verify-tag --generate-notes --title "StreetQuest $env:GITHUB_REF_NAME"
+          $zip = "StreetQuest-$env:GITHUB_REF_NAME-win-x64.zip"
+          gh release create $env:GITHUB_REF_NAME $zip SHA256SUMS.txt --repo $env:GITHUB_REPOSITORY --verify-tag --generate-notes --title "StreetQuest $env:GITHUB_REF_NAME"

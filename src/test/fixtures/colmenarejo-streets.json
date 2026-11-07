@@ -19,9 +19,6 @@
     ] },
     { "type": "way", "id": 102, "tags": { "highway": "residential", "name": "Calle Madrid" }, "geometry": [
       { "lat": 40.551, "lon": -4.01 }, { "lat": 40.552, "lon": -4.00 }
-    ] },
-    { "type": "way", "id": 106, "tags": { "highway": "residential", "name": "Calle Rota" }, "geometry": [
-      { "lat": 91, "lon": -4.01 }, { "lat": 40.55, "lon": -4.00 }
     ] }
   ]
 }

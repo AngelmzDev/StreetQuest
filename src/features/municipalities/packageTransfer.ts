@@ -1,6 +1,7 @@
 import type { MunicipalityPackage, Position } from '../../domain/maps/types'
 import { validateBoundaryGeometry } from '../../domain/maps/boundaries'
 import type { MunicipalityStore } from '../../infrastructure/storage/municipalityStore'
+import { isStreetId } from '../../domain/maps/streetIdentity'
 
 export const MAX_PACKAGE_BYTES = 128 * 1024 * 1024
 
@@ -58,7 +59,7 @@ export function parseMunicipalityPackage(input: unknown): MunicipalityPackage {
   const ids = new Set<string>()
   for (const value of pkg.streets) {
     const street = object(value)
-    requireValue(text(street.id) && !ids.has(street.id) && text(street.name) && text(street.normalizedName))
+    requireValue(isStreetId(street.id) && !ids.has(street.id) && text(street.name) && text(street.normalizedName))
     ids.add(street.id)
     requireValue(Array.isArray(street.highwayTypes) && street.highwayTypes.every(text))
     requireValue(Array.isArray(street.segments) && street.segments.length > 0)
