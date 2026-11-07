@@ -102,6 +102,7 @@ export function MunicipalityHome({ services, onOpenMunicipality }: MunicipalityH
       await reloadCatalog()
       dispatch({ type: 'status', status: `${candidate.municipalityName} está disponible sin conexión.` })
     } catch (error) {
+      console.error('StreetQuest: no se pudo importar el municipio', error)
       dispatch({ type: 'error', error: friendlyError(error) })
     } finally {
       controller.current = null

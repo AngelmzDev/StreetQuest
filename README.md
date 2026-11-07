@@ -53,6 +53,8 @@ Activa «Racha continua hasta fallar» para intentar superar diez aciertos. Las 
 
 Esta fase busca municipios españoles con un límite administrativo compatible en OpenStreetMap. Los datos dependen de la cobertura de OpenStreetMap. El mapa incluye vías con nombre de las categorías seleccionadas para el estudio urbano.
 
+Para esta entrega se comprobaron descargas reales y reapertura offline de Colmenarejo, Brunete y Valdemaqueda. Un proveedor público puede devolver errores temporales incluso para esos municipios. Conserva una copia local o exporta el paquete para seguir estudiando.
+
 Si la búsqueda o descarga tarda demasiado, cancélala y vuelve a intentarlo más tarde. Mientras tanto puedes seguir usando Colmenarejo y los mapas guardados. En la edición web, abre primero la versión compilada con conexión para que el navegador guarde los recursos de la aplicación.
 
 ## Desarrollo y pruebas
