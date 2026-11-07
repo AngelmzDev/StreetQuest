@@ -16,6 +16,7 @@ export interface StreetGame {
   record: number
   answered: boolean
   lastCorrect: boolean
+  review: boolean
 }
 
 function shuffled<T>(items: T[]): T[] {
@@ -27,14 +28,14 @@ function shuffled<T>(items: T[]): T[] {
   return result
 }
 
-export function startGame(mode: GameMode, streets: Street[], record = 0): StreetGame {
-  const questions = shuffled(streets).slice(0, 10).map((street) => ({
+export function startGame(mode: GameMode, streets: Street[], record = 0, reviewQueue?: Street[]): StreetGame {
+  const questions = (reviewQueue ?? shuffled(streets)).slice(0, 10).map((street) => ({
     street,
     options: mode === 'guess'
       ? shuffled([street, ...shuffled(streets.filter((item) => item.id !== street.id)).slice(0, 3)])
       : [],
   }))
-  return { mode, questions, index: 0, correct: 0, streak: 0, record, answered: false, lastCorrect: false }
+  return { mode, questions, index: 0, correct: 0, streak: 0, record, answered: false, lastCorrect: false, review: reviewQueue !== undefined }
 }
 
 export function answerGame(game: StreetGame, id?: string): StreetGame {

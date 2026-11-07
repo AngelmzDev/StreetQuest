@@ -32,6 +32,10 @@ test('Windows executable opens real Colmenarejo offline and keeps it after resta
     await page.getByRole('button', { name: 'Localiza la calle' }).click()
     await expect(page.getByText(/^Localiza .+ en el mapa\.$/)).toBeVisible()
     await page.getByRole('button', { name: 'Salir del juego' }).click()
+    await expect(page.getByRole('region', { name: 'Repaso inteligente' })).toContainText('10 de')
+    await page.getByRole('button', { name: 'Repasar nombres' }).click()
+    await expect(page.getByText('Repaso inteligente', { exact: true })).toBeVisible()
+    await page.getByRole('button', { name: 'Salir del juego' }).click()
   } finally {
     await first.close()
   }
@@ -43,6 +47,7 @@ test('Windows executable opens real Colmenarejo offline and keeps it after resta
     await page.getByRole('button', { name: 'Abrir Colmenarejo' }).click()
     await expect(page.getByRole('heading', { name: 'Colmenarejo', level: 1 })).toBeVisible()
     expect(await page.locator('select option').count()).toBeGreaterThan(100)
+    await expect(page.getByRole('region', { name: 'Repaso inteligente' })).toContainText('10 de')
   } finally {
     await second.close()
   }

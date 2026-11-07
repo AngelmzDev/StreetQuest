@@ -37,6 +37,8 @@ Desde el mapa puedes elegir **Adivina la calle** para identificar el tramo resal
 
 El marcador suma un punto por acierto. Un fallo o salto reinicia la racha actual. El récord de aciertos seguidos se guarda en el equipo por municipio y modo de juego.
 
+**Repaso inteligente.** «Tu progreso» muestra las calles practicadas, los aciertos y las calles dominadas para nombres y ubicaciones por separado. «Repasar nombres» y «Repasar ubicaciones» presentan primero las calles practicadas que aún no dominas, después las nuevas y finalmente las dominadas, empezando por las que llevas más tiempo sin ver. Tres aciertos seguidos en una misma calle la marcan como dominada. Un error o salto reinicia esa cuenta para la calle. El historial se guarda al responder y se conserva al cerrar la aplicación, sin conexión.
+
 Esta fase busca municipios españoles con un límite administrativo compatible en OpenStreetMap. Los datos dependen de la cobertura de OpenStreetMap. El mapa incluye vías con nombre de las categorías seleccionadas para el estudio urbano.
 
 Si la búsqueda o descarga tarda demasiado, cancélala y vuelve a intentarlo más tarde. Mientras tanto puedes seguir usando Colmenarejo y los mapas guardados. En la edición web, abre primero la versión compilada con conexión para que el navegador guarde los recursos de la aplicación.
